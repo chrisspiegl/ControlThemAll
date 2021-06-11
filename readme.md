@@ -58,3 +58,9 @@ You can also setup buttons which switch the DVE FillSource individually.
 - adding a menubar application (possibly through electron) to see the connection status and reconnect if necessary (and so you don't have to have a terminal running while using this app)
 - configuration through user interface
 - adding the ability to control more programs (OBS Studio / Keyboard Shortcuts / OSC Compatible Applications / etc.)
+
+## Helpful Libraries
+
+**[ATEM-Connection](https://github.com/nrkno/tv-automation-atem-connection):** Incredible library to interface with the ATEM Mini lineup.
+
+**[node-easymidi](https://github.com/dinchak/node-easymidi):** Makes listenign for Midi Events super easy… 🥁
