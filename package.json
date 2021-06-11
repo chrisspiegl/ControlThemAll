@@ -1,0 +1,27 @@
+{
+  "type": "module",
+  "private": true,
+  "name": "midi2atem",
+  "version": "0.0.1",
+  "description": "Controlling your ATEM with a MIDI Controll Surface",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "atem-connection": "3.0.0-nightly-latest-20210530-132658-16c3cdd.0",
+    "atem-state": "^0.10.1",
+    "deep-object-diff": "^1.1.0",
+    "deepmerge": "^4.2.2",
+    "easymidi": "^2.0.4",
+    "lodash": "^4.17.21"
+  },
+  "author": {
+    "name": "Chris Spiegl",
+    "email": "chris@chrisspiegl.com",
+    "url": "https://chrisspiegl.com/"
+  },
+  "homepage": "https://github.com/chrisspiegl/midi2atem",
+  "license": "UNLICENSED"
+}
