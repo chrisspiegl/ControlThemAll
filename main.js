@@ -22,17 +22,19 @@ class MIDI2ATEM {
     }
 
     this.setup()
-
-    this.midi = new MIDI(this)
-    this.atem = new ATEM(this)
-    this.init()
   }
 
   setup() {
     const exitHandler = async (options, exitCode) => {
       console.log(`exitHandler with exitCode:${exitCode || 'NONE'}`)
+
       if (options.cleanup) {
         console.log('Server closing: Doing the cleanup.')
+        buttonLightOff(_.flatten(config.buttons.map((el) => [el.note])))
+        updateButtonsViaState()
+        updatecontrollerState(config.controllers.map((el) => merge(el, { state: 'cc', value: 0 })))
+        updateControllersViaState()
+
         this.midi.inputMidi.close()
         // this.midi.outputMidi.close()
         await this.atem.myAtem.disconnect()
@@ -45,9 +47,9 @@ class MIDI2ATEM {
     }
 
     // do something when app is closing
-    process.on('exit', exitHandler.bind(null, { cleanup: true }))
+    // process.on('exit', exitHandler.bind(null, { exit: true }))
     // catches ctrl+c event
-    process.on('SIGINT', exitHandler.bind(null, { exit: true }))
+    process.on('SIGINT', exitHandler.bind(null, { cleanup: true }))
     // catches "kill pid" (for example: nodemon restart)
     process.on('SIGUSR1', exitHandler.bind(null, { exit: true }))
     process.on('SIGUSR2', exitHandler.bind(null, { exit: true }))
@@ -56,9 +58,11 @@ class MIDI2ATEM {
     process.on('unhandledRejection', async (reason) => {
       console.log(`UNHANDLED:`, reason)
     })
-  }
 
-  init() {
+
+    this.midi = new MIDI(this)
+    this.atem = new ATEM(this)
+
     const myAtem = this.atem.myAtem
     const inputMidi = this.midi.inputMidi
     const outputMidi = this.midi.outputMidi
@@ -200,24 +204,23 @@ class MIDI2ATEM {
         actionChains.camWithDve(dveCamId)
       },
 
-      changeAudioGain: (controllerActionName, audioIndex, channels, value) => {
-        channels = asArray(channels)
-        let levelMin = -10000
-        let levelMax = 1000
-        const gainValue = map(value, 0, 127, levelMin, levelMax)
+      changeAudioGain: (options, value) => { // expected value == between 0 and 127
+        const { note, audioIndex, channels, defaultValue, range } = options
+        value = value || defaultValue || 0
+        const faderGain = map(value, 0, 127, range.min, range.max)
 
-        for (const channel of channels) {
-          myAtem.setFairlightAudioMixerSourceProps(audioIndex, channel, {
-            faderGain: gainValue
-          })
+        for (const channel of asArray(channels)) {
+          myAtem.setFairlightAudioMixerSourceProps(audioIndex, channel, { faderGain })
         }
-        updatecontrollerState({ [controllersByAction(controllerActionName)[0]]: { value }})
+        updatecontrollerState(controllersByName(options.name), { value }, 'name')
         updateControllersViaState()
       }
     }
 
     const buttonActions = {
       ResetDveScale: (options, value) => {
+        const { defaultValue } = options
+        value = value || defaultValue || 0
         config.dve.stateCurrent = {
           ...config.dve.stateDefault,
           ...config.dve.stateCurrent,
@@ -225,14 +228,16 @@ class MIDI2ATEM {
           sizeY: config.dve.stateMain.sizeY,
         }
         myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        const controllersForAction = controllersByAction('ChangeDveScale')
-        resetControllersToDefault(controllersForAction)
+        resetControllersToDefault(controllersByAction('ChangeDveScale'))
         updateControllersViaState()
-        buttonLightOff(buttonsByAction('PhoneDve'))
-        buttonLightOff(buttonsByAction('MonitorDve'))
+        console.log(`options.buttonLightOff:`, options.buttonsLightOff)
+        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
         updateButtonsViaState()
       },
       ResetDvePosition: (options, value) => {
+        const { defaultValue } = options
+        value = value || defaultValue || 0
         config.dve.stateCurrent = {
           ...config.dve.stateDefault,
           ...config.dve.stateCurrent,
@@ -247,14 +252,15 @@ class MIDI2ATEM {
         }
         config.dve.stateMain = { ...config.dve.stateCurrent }
         myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        const controllersForAction = controllersByAction('ChangeDvePosition')
-        resetControllersToDefault(controllersForAction)
+        resetControllersToDefault(controllersByAction('ChangeDvePosition'))
         updateControllersViaState()
-        buttonLightOff(buttonsByAction('PhoneDve'))
-        buttonLightOff(buttonsByAction('MonitorDve'))
+        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
         updateButtonsViaState()
       },
       ResetDveMask: (options, value) => {
+        const { defaultValue } = options
+        value = value || defaultValue || 0
         config.dve.stateCurrent = {
           ...config.dve.stateDefault,
           ...config.dve.stateMain,
@@ -269,32 +275,14 @@ class MIDI2ATEM {
         }
         config.dve.stateMain = { ...config.dve.stateCurrent }
         myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        const controllersForAction = controllersByAction('ChangeDveMask')
-        resetControllersToDefault(controllersForAction)
+        resetControllersToDefault(controllersByAction('ChangeDveMask'))
         updateControllersViaState()
-        buttonLightOff(buttonsByAction('PhoneDve'))
-        buttonLightOff(buttonsByAction('MonitorDve'))
+        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
         updateButtonsViaState()
       },
 
-      ResetAudioGainMain: (options, value) => {
-        const audioIndex = 1301
-        const channel = ['-65280'] //  stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-        const controllerValue = map(0, -10000, 1000, 0, 127)
-        actionChains.changeAudioGain('ChangeAudioGainMain', audioIndex, channel, controllerValue)
-      },
-      ResetAudioGainDisplay: (options, value) => {
-        const audioIndex = 2
-        const channel = ['-65280']
-        const controllerValue = map(0, -10000, 1000, 0, 127)
-        actionChains.changeAudioGain('ChangeAudioGainDisplay', audioIndex, channel, controllerValue)
-      },
-      ResetAudioGainPhone: (options, value) => {
-        const audioIndex = 4
-        const channel = ['-65280']
-        const controllerValue = map(0, -10000, 1000, 0, 127)
-        actionChains.changeAudioGain('ChangeAudioGainPhone', audioIndex, channel, controllerValue)
-      },
+      ResetAudioGain: (options, value) => actionChains.changeAudioGain(options),
 
       // ResetDveAll: () => {
       //   config.dve.stateCurrent = {
@@ -302,8 +290,7 @@ class MIDI2ATEM {
       //   }
       //   config.dve.stateMain = { ...config.dve.stateCurrent }
       //   myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-      //   const controllersForAction = controllersByAction('ChangeDveMask')
-      //   resetControllersToDefault(controllersForAction)
+      //   resetControllersToDefault(controllersByAction('ChangeDveMask'))
       //   updateControllersViaState()
       // },
 
@@ -316,8 +303,8 @@ class MIDI2ATEM {
         myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
         if (options.programInput) actionChains.camInDve(config.inputMapping[options.programInput])
         if (options.fillSource) actionChains.camWithDve(config.inputMapping[options.fillSource])
-        buttonLightOn(options.buttonLightOn)
-        buttonLightOff(options.buttonLightOff)
+        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
         updateButtonsViaState()
         updateControllersViaState()
       },
@@ -355,6 +342,8 @@ class MIDI2ATEM {
 
     const controlActions = {
       ChangeDveScale: (options, value) => {
+        const { defaultValue } = options
+        value = value || defaultValue || 0
         console.log(`value:`, value)
         config.dve.stateCurrent = {
           ...config.dve.stateDefault,
@@ -363,11 +352,15 @@ class MIDI2ATEM {
           sizeY: value * 10,
         }
         myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        buttonLightOff(buttonsByAction('PhoneDve'))
-        buttonLightOff(buttonsByAction('MonitorDve'))
+        updatecontrollerState(controllersByAction('ChangeDveScale'), { value })
+        updateControllersViaState()
+        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
         updateButtonsViaState()
       },
       ChangeDvePosition: (options, value) => {
+        const { defaultValue } = options
+        value = value || defaultValue || 0
         const me = 0
         const usk = 0
         // const pos = Math.floor(map(value, 0, 127, 0, Object.keys(positions).length))
@@ -388,11 +381,15 @@ class MIDI2ATEM {
         })
         myAtem.runUpstreamKeyerFlyKeyTo(me, usk, Enums.FlyKeyKeyFrame.A)
         // myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        buttonLightOff(buttonsByAction('PhoneDve'))
-        buttonLightOff(buttonsByAction('MonitorDve'))
+        updatecontrollerState(controllersByAction('ChangeDvePosition'), { value })
+        updateControllersViaState()
+        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
         updateButtonsViaState()
       },
       ChangeDveMask: (options, value) => {
+        const { defaultValue } = options
+        value = value || defaultValue || 0
         console.log(`value:`, value)
         let valueWithDirection = map(value, 0, 128, 0, 10000)
         console.log(`valueWithDirection:`, valueWithDirection)
@@ -407,32 +404,20 @@ class MIDI2ATEM {
         }
         console.log(`dveStateLocal:`, config.dve.stateCurrent)
         myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        buttonLightOff(buttonsByAction('PhoneDve'))
-        buttonLightOff(buttonsByAction('MonitorDve'))
+        updatecontrollerState(controllersByAction('ChangeDveMask'), { value })
+        updateControllersViaState()
+        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
         updateButtonsViaState()
       },
 
-      ChangeAudioGainMain: (options, value) => {
-        const audioIndex = 1301
-        const channel = ['-65280'] //  stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-        actionChains.changeAudioGain('ChangeAudioGainMain', audioIndex, channel, value)
-      },
-      ChangeAudioGainDisplay: (options, value) => {
-        const audioIndex = 2
-        const channel = ['-65280']
-        actionChains.changeAudioGain('ChangeAudioGainDisplay', audioIndex, channel, value)
-      },
-      ChangeAudioGainPhone: (options, value) => {
-        const audioIndex = 4
-        const channel = ['-65280']
-        actionChains.changeAudioGain('ChangeAudioGainPhone', audioIndex, channel, value)
-      },
+      ChangeAudioGain: (options, value) => actionChains.changeAudioGain(options, value),
     }
 
     // Set up a new outputMidi.
 
     inputMidi.on('noteoff', (params) => {
-      console.log(`params:`, params)
+      console.log(`noteoff with params:`, params)
       const { note, velocity: value, channel } = params
       const buttonActionConfig = _.find(config.buttons, { note})
       console.log(`buttonAction:`, buttonActionConfig)
@@ -441,34 +426,26 @@ class MIDI2ATEM {
     })
 
     inputMidi.on('cc', (params) => {
-      console.log(`params:`, params)
+      console.log(`cc with params:`, params)
       const { controller: note, value, channel } = params
       const controlActionConfig = _.find(config.controllers, { note })
-      console.log(`controlAction:`, controlActionConfig)
       const controlAction = controlActions[controlActionConfig.action]
       if (controlAction) controlAction(controlActionConfig, value)
-      updatecontrollerState({ [note]: { value }})
     })
 
     // Generic Midi Functions
     function buttonLightOn(btns) {
       btns = asArray(btns)
       console.log(`buttonLightOn:`, btns)
-      for (const btn of btns) {
-        const state = {}
-        state[btn] = { state: 'noteon', velocity: 127 }
-        updateButtonState(state)
-      }
+      btns = btns.map((btn) => { return { note: btn }})
+      updateButtonState(btns, { state: 'noteon', value: 127 }, 'note')
     }
 
     function buttonLightOff(btns) {
       btns = asArray(btns)
-      console.log(`buttonLightOff:`, btns)
-      for (const btn of btns) {
-        const state = {}
-        state[btn] = { state: 'noteoff', velocity: 0 }
-        updateButtonState(state)
-      }
+      console.log(`buttonLightOn:`, btns)
+      btns = btns.map((btn) => { return { note: btn }})
+      updateButtonState(btns, { state: 'noteoff', value: 0 }, 'note')
     }
 
     function buttonsByAction(action) {
@@ -476,23 +453,43 @@ class MIDI2ATEM {
     }
 
     function controllersByAction(action) {
-      return _.map(_.filter(config.controllers, (el) => el.action === action), (el) => el.note)
+      return _.filter(config.controllers, (el) => el.action === action)
+    }
+
+    function controllersByName(name) {
+      return _.filter(config.controllers, (el) => el.name === name)
     }
 
     function updateButtonsViaState() {
-      for (const btn of Object.keys(config.buttonState)) {
-        const btnState = config.buttonState[btn]
-        outputMidi.send(btnState.state, {
-          note: btn,
-          velocity: btnState.velocity,
-          channel: config.midi.outputChannel,
+      console.log(`updateButtonsViaState`)
+      config.buttons.forEach((btn) => {
+        // console.log(`btn:`, btn)
+        // console.log(`this:`, {
+        //   note: btn.note,
+        //   velocity: btn.value || btn.defaultValue || 0,
+        //   channel: btn.channel || config.midi.outputChannel,
+        // })
+        outputMidi.send(btn.state || 'noteoff', {
+          note: btn.note,
+          velocity: btn.value || btn.defaultValue || 0,
+          channel: btn.channel || config.midi.outputChannel,
         })
-      }
+      })
     }
 
-    function updateButtonState(buttonStates) {
-      config.buttonState = merge(config.buttonState, buttonStates)
-      // console.log(`updateButtonState:`, config.buttonState)
+    function updateButtonState(buttonStates, overwrite = {}, via = 'action') {
+      buttonStates = asArray(buttonStates)
+      buttonStates = buttonStates.map((buttonState) => {
+        return { state: 'noteoff', value: buttonState.defaultValue || 0, ...buttonState, ...overwrite}
+      })
+      config.buttons = config.buttons.map((button) => {
+        let updatedButtonState = _.find(buttonStates, (el) => el[via] === button[via])
+        if (updatedButtonState) {
+          button.value = updatedButtonState.value
+          button.state = updatedButtonState.state
+        }
+        return button
+      })
     }
 
     function updateDveButtons() {
@@ -504,39 +501,60 @@ class MIDI2ATEM {
     }
 
     function updateControllersViaState() {
-      for (const cont of Object.keys(config.controllerState)) {
-        const contState = config.controllerState[cont]
-        outputMidi.send(contState.state, {
-          controller: cont,
-          value: contState.value,
-          channel: config.midi.outputChannel,
+      console.log(`updateControllersViaState`)
+      const { controllers } = config
+      controllers.forEach((controller) => {
+        const { state, note, value, channel, defaultValue } = controller
+        outputMidi.send(state || 'cc', {
+          controller: note,
+          value: value || defaultValue || 0,
+          channel: channel || config.midi.outputChannel,
         })
-      }
+      })
     }
 
-    function updatecontrollerState(controllerStates) {
-      config.controllerState = merge(config.controllerState, controllerStates)
+    function updatecontrollerState(controllerStates, overwrite = {}, via = 'action') {
+      controllerStates = asArray(controllerStates)
+      controllerStates = controllerStates.map((controllerState) => {
+        return { state: 'cc', value: controllerState.defaultValue || 0, ...controllerState, ...overwrite}
+      })
+      config.controllers = config.controllers.map((controller) => {
+        let updatedControllerState = _.find(controllerStates, (el) => el[via] === controller[via])
+        if (updatedControllerState) {
+          controller.value = updatedControllerState.value
+        }
+        return controller
+      })
     }
 
-    function resetControllersToDefault(contrls) {
-      const state = {}
-      for (const controller of contrls) {
-        console.log(`config.controllerState:`, config.controllerState)
-        config.controllerState[controller] = config.controllerStateDefault[controller]
-      }
+    function resetControllersToDefault(controllerStates) {
+      console.log(`resetControllersToDefault:`, controllerStates)
+      controllerStates = asArray(controllerStates)
+      const { controllers } = config
+      controllerStates = controllerStates.map((controllerState) => merge(controllerState, { state: 'cc', value: controllerState.defaultValue || 0 }))
+      controllers.map((controller) => {
+        let updatedControllerState = _.find(controllerStates, (el) => el.action === controller.action)
+        if (updatedControllerState) controller.value = updatedControllerState.value
+        return controller
+      })
     }
 
     function runButtonStateUpdate(state, pathToChange = null) {
       const me = 0
       const usk = 0
       pathToChange = asArray(pathToChange)
-      console.log(`pathToChange:`, pathToChange)
+      if (pathToChange.length !== 1 || !pathToChange.includes('info.lastTime')) console.log(`pathToChange:`, pathToChange)
       for (const path of pathToChange) {
         const isInitial = (path === 'initial')
         if (isInitial) {
-          actionChains.changeAudioGain('ChangeAudioGainMain', 1301, ['-65280'], 115)
-          actionChains.changeAudioGain('ChangeAudioGainDisplay', 2, ['-65280'], 105)
-          actionChains.changeAudioGain('ChangeAudioGainPhone', 4, ['-65280'], 105)
+          // find all ChangeAudioGain controllers and set them to their default
+          for (const controller of config.controllers) {
+            if (controller.defaultValue) {
+              const controlAction = controlActions[controller.action]
+              console.log(`controlAction:`, controller.action)
+              if (controlAction) controlActions[controller.action](controller)
+            }
+          }
         }
         if (isInitial || path.includes('video.mixEffects')) {
           const programInput = state.video.mixEffects[me].programInput
