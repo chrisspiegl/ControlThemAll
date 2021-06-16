@@ -30,13 +30,12 @@ class MIDI2ATEM {
 
       if (options.cleanup) {
         console.log('Server closing: Doing the cleanup.')
-        buttonLightOff(_.flatten(config.buttons.map((el) => [el.note])))
-        updateButtonsViaState()
-        updatecontrollerState(config.controllers.map((el) => merge(el, { state: 'cc', value: 0 })))
-        updateControllersViaState()
+        // buttonLightOff(_.flatten(config.buttons.map((el) => [el.note])))
+        // updateButtonsViaState()
+        // updatecontrollerState(config.controllers.map((el) => merge(el, { state: 'cc', value: 0 })))
+        // updateControllersViaState()
 
-        this.midi.inputMidi.close()
-        // this.midi.outputMidi.close()
+        midi.disconnect()
         await this.atem.myAtem.disconnect()
 
         console.log('Server closed, cleaned, and shutting down!')
@@ -60,12 +59,56 @@ class MIDI2ATEM {
     })
 
 
-    this.midi = new MIDI(this)
+    this.midi = new MIDI({
+      onNoteOn,
+      onNoteOff,
+      onControllerChange,
+      onConnect,
+      onDisconnect,
+    })
+    const midi = this.midi
+    this.midi.connect({
+      inputDeviceName: config.midi.inputDeviceName || config.midi.deviceName,
+      outputDeviceName: config.midi.outputDeviceName || config.midi.deviceName,
+      outputChannel: config.midi.outputChannel,
+    })
     this.atem = new ATEM(this)
 
+    function onConnect(params) {
+      console.log(`onConnect:`, params)
+      if (params.isReconnect) {
+        console.log(`Reconnecting MIDI Controller`)
+      }
+      updateButtonsViaState()
+      updateControllersViaState()
+    }
+
+    function onDisconnect(params) {
+      console.log(`onDisconnect:`, params)
+    }
+
+    function onNoteOn(msg) {
+      console.log(`NOTE ON : msg:`, msg)
+    }
+
+    function onNoteOff(msg) {
+      console.log(`noteoff with msg:`, msg)
+      const { note, velocity: value, channel } = msg
+      const buttonActionConfig = _.find(config.buttons, { note})
+      console.log(`buttonAction:`, buttonActionConfig)
+      const buttonAction = buttonActions[buttonActionConfig.action]
+      if (buttonAction) buttonAction(buttonActionConfig, value)
+    }
+
+    function onControllerChange(msg) {
+      console.log(`cc with msg:`, msg)
+      const { controller: note, value, channel } = msg
+      const controlActionConfig = _.find(config.controllers, { note })
+      const controlAction = controlActions[controlActionConfig.action]
+      if (controlAction) controlAction(controlActionConfig, value)
+    }
+
     const myAtem = this.atem.myAtem
-    const inputMidi = this.midi.inputMidi
-    const outputMidi = this.midi.outputMidi
 
     myAtem.on('connected', () => {
       setInitialState(myAtem.state)
@@ -301,8 +344,8 @@ class MIDI2ATEM {
         }
         config.dve.stateMain = { ...config.dve.stateCurrent }
         myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        if (options.programInput) actionChains.camInDve(config.inputMapping[options.programInput])
         if (options.fillSource) actionChains.camWithDve(config.inputMapping[options.fillSource])
+        if (options.programInput) actionChains.camInDve(config.inputMapping[options.programInput])
         if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
         if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
         updateButtonsViaState()
@@ -414,25 +457,6 @@ class MIDI2ATEM {
       ChangeAudioGain: (options, value) => actionChains.changeAudioGain(options, value),
     }
 
-    // Set up a new outputMidi.
-
-    inputMidi.on('noteoff', (params) => {
-      console.log(`noteoff with params:`, params)
-      const { note, velocity: value, channel } = params
-      const buttonActionConfig = _.find(config.buttons, { note})
-      console.log(`buttonAction:`, buttonActionConfig)
-      const buttonAction = buttonActions[buttonActionConfig.action]
-      if (buttonAction) buttonAction(buttonActionConfig, value)
-    })
-
-    inputMidi.on('cc', (params) => {
-      console.log(`cc with params:`, params)
-      const { controller: note, value, channel } = params
-      const controlActionConfig = _.find(config.controllers, { note })
-      const controlAction = controlActions[controlActionConfig.action]
-      if (controlAction) controlAction(controlActionConfig, value)
-    })
-
     // Generic Midi Functions
     function buttonLightOn(btns) {
       btns = asArray(btns)
@@ -463,13 +487,7 @@ class MIDI2ATEM {
     function updateButtonsViaState() {
       console.log(`updateButtonsViaState`)
       config.buttons.forEach((btn) => {
-        // console.log(`btn:`, btn)
-        // console.log(`this:`, {
-        //   note: btn.note,
-        //   velocity: btn.value || btn.defaultValue || 0,
-        //   channel: btn.channel || config.midi.outputChannel,
-        // })
-        outputMidi.send(btn.state || 'noteoff', {
+        midi.send(btn.state || 'noteoff', {
           note: btn.note,
           velocity: btn.value || btn.defaultValue || 0,
           channel: btn.channel || config.midi.outputChannel,
@@ -505,7 +523,7 @@ class MIDI2ATEM {
       const { controllers } = config
       controllers.forEach((controller) => {
         const { state, note, value, channel, defaultValue } = controller
-        outputMidi.send(state || 'cc', {
+        midi.sendControllerChange({
           controller: note,
           value: value || defaultValue || 0,
           channel: channel || config.midi.outputChannel,

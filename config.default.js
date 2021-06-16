@@ -2,7 +2,8 @@ import { Enums } from 'atem-connection'
 
 export const config = {
   midi: {
-    deviceName: 'X-TOUCH MINI',
+    inputDeviceName: 'X-TOUCH MINI',
+    outputDeviceName: 'X-TOUCH MINI',
     outputChannel: 10,
   },
 
