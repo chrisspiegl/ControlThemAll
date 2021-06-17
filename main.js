@@ -197,8 +197,10 @@ class MIDI2ATEM extends EventEmitter {
 
       changeAudioGain: (options, value) => { // expected value == between 0 and 127
         const { note, audioIndex, channels, defaultValue, range } = options
-        value = value || defaultValue || 0
-        const faderGain = map(value, 0, 127, range.min, range.max)
+        if (value !== 0 && !value || value === -1) value = defaultValue
+
+        const faderRange = { min: -10000, max: 1000, ...range }
+        const faderGain = Math.round(map(value, 0, 127, faderRange.min, faderRange.max) / 100) * 100
 
         for (const channel of asArray(channels)) {
           this.atem.setFairlightAudioMixerSourceProps(audioIndex, channel, { faderGain })

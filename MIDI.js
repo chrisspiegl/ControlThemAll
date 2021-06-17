@@ -246,10 +246,10 @@ export class MIDI extends EventEmitter {
   updateControllersViaStateInstant(controllerStates) {
     this.log('debug', 'updateControllersViaStateInstant')
     controllerStates.forEach((controller) => {
-      const { state, note, value, channel, defaultValue } = controller
+      const { state, note, value, channel } = controller
       this.sendControllerChange({
         controller: note,
-        value: value || defaultValue || 0,
+        value: value,
         channel: channel || config.midi.outputChannel,
       })
     })
