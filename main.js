@@ -5,246 +5,194 @@ import { config } from './config.js'
 import { asArray, map } from './utils.js'
 
 import { Enums } from 'atem-connection'
+import { EventEmitter } from 'inf-ee'
 import merge from 'deepmerge'
 import _ from 'lodash'
 
+const MIDI_RESEND_INTERVAL = 1000 // ms
 
-class MIDI2ATEM {
+class MIDI2ATEM extends EventEmitter {
   constructor() {
+    super()
     console.log(`Constructing MIDI2ATEM`)
-    this.status = {
-      midi: {
-        connected: false,
-      },
-      atem: {
-        connected: false,
-      },
-    }
+
+    this._resendMidiTimer = undefined
+
+    this.midi = undefined
+    this.atem = undefined
 
     this.setup()
   }
 
-  setup() {
-    const exitHandler = async (options, exitCode) => {
-      console.log(`exitHandler with exitCode:${exitCode || 'NONE'}`)
+  async exitHandler(options, exitCode) {
+    console.log(`exitHandler with exitCode:${exitCode || 'NONE'}`)
+    console.log(`exitCode:`, exitCode)
 
-      if (options.cleanup) {
-        console.log('Server closing: Doing the cleanup.')
-        // buttonLightOff(_.flatten(config.buttons.map((el) => [el.note])))
-        // updateButtonsViaState()
-        // updatecontrollerState(config.controllers.map((el) => merge(el, { state: 'cc', value: 0 })))
-        // updateControllersViaState()
+    if (options.cleanup) {
+      console.log('Server closing: Doing the cleanup.')
+      this.switchButtonLightOff(_.flatten(config.buttons.map((el) => [el.note])))
+      this.midi.updateButtonsViaState(config.buttons)
+      this.updatecontrollerState(config.controllers.map((el) => merge(el, { state: 'cc', value: 0 })))
+      this.midi.updateControllersViaState(config.controllers)
 
-        midi.disconnect()
-        await this.atem.myAtem.disconnect()
+      await this.midi.disconnect()
+      await this.atem.disconnect()
 
-        console.log('Server closed, cleaned, and shutting down!')
-      } else if (options.exit) {
-        console.log('Server closed all connectiosn successfully… shuting down…')
-        process.exit()
-      }
+      console.log('Server closed, cleaned, and shutting down!')
+    } else if (options.exit) {
+      console.log('Server closed all connectiosn successfully… shuting down…')
+      process.exit()
     }
+  }
 
-    // do something when app is closing
-    // process.on('exit', exitHandler.bind(null, { exit: true }))
-    // catches ctrl+c event
-    process.on('SIGINT', exitHandler.bind(null, { cleanup: true }))
-    // catches "kill pid" (for example: nodemon restart)
-    process.on('SIGUSR1', exitHandler.bind(null, { exit: true }))
-    process.on('SIGUSR2', exitHandler.bind(null, { exit: true }))
-    // catches uncaught exceptions
-    process.on('uncaughtException', exitHandler.bind(null, { exit: true }))
-    process.on('unhandledRejection', async (reason) => {
-      console.log(`UNHANDLED:`, reason)
-    })
-
-
-    this.midi = new MIDI({
-      onNoteOn,
-      onNoteOff,
-      onControllerChange,
-      onConnect,
-      onDisconnect,
-    })
-    const midi = this.midi
-    this.midi.connect({
-      inputDeviceName: config.midi.inputDeviceName || config.midi.deviceName,
-      outputDeviceName: config.midi.outputDeviceName || config.midi.deviceName,
-      outputChannel: config.midi.outputChannel,
-    })
-    this.atem = new ATEM(this)
-
-    function onConnect(params) {
-      console.log(`onConnect:`, params)
-      if (params.isReconnect) {
-        console.log(`Reconnecting MIDI Controller`)
-      }
-      updateButtonsViaState()
-      updateControllersViaState()
+  midiOnConnect(params) {
+    console.log(`onConnect:`, params)
+    if (params.isReconnect) {
+      console.log(`Reconnecting MIDI Controller`)
     }
+    this.midiStartTimers()
+  }
 
-    function onDisconnect(params) {
-      console.log(`onDisconnect:`, params)
+  midiOnDisconnect(params) {
+    console.log(`onDisconnect:`, params)
+    this.midiStopTimers()
+  }
+
+  midiOnNoteOn(msg) {
+    console.log(`NOTE ON : msg:`, msg)
+  }
+
+  midiOnNoteOff(msg) {
+    console.log(`noteoff with msg:`, msg)
+    const { note, velocity: value, channel } = msg
+    const buttonConfig = _.find(config.buttons, { note })
+    console.log(`buttonConfig:`, buttonConfig)
+    const buttonAction = this.getButtonAction(buttonConfig.action)
+    if (buttonAction) buttonAction(buttonConfig, value)
+  }
+
+  midiOnControllerChange(msg) {
+    console.log(`cc with msg:`, msg)
+    const { controller: note, value, channel } = msg
+    const controllerConfig = _.find(config.controllers, { note })
+    console.log(`controllerConfig:`, controllerConfig)
+    const controlAction = this.getControllerAction(controllerConfig.action)
+    if (controlAction) controlAction(controllerConfig, value)
+  }
+
+  midiStartTimers() {
+    if (!this._resendMidiTimer) {
+      this._resendMidiTimer = setInterval(() => {
+        // Make sure that the buttons are updated in regular intervals.
+        // This is necessary becuase layers on the Behringer X-Touch Mini do not update in the background when they are not active.
+        // Simply sending the update every 1000ms or so will update at most 1 second after changing to a different layer.
+        this.midi.updateButtonsViaState(config.buttons)
+        this.midi.updateControllersViaState(config.controllers)
+      }, MIDI_RESEND_INTERVAL)
     }
+  }
 
-    function onNoteOn(msg) {
-      console.log(`NOTE ON : msg:`, msg)
+  midiStopTimers() {
+    if (this._resendMidiTimer) {
+      clearInterval(this._resendMidiTimer)
+      this._resendMidiTimer = undefined
     }
+  }
 
-    function onNoteOff(msg) {
-      console.log(`noteoff with msg:`, msg)
-      const { note, velocity: value, channel } = msg
-      const buttonActionConfig = _.find(config.buttons, { note})
-      console.log(`buttonAction:`, buttonActionConfig)
-      const buttonAction = buttonActions[buttonActionConfig.action]
-      if (buttonAction) buttonAction(buttonActionConfig, value)
-    }
+  atemOnConnected(params) {
+    console.log(`atem : onConnect`, params)
+    this.runStateUpate(this.atem.getState(), 'initial')
+  }
 
-    function onControllerChange(msg) {
-      console.log(`cc with msg:`, msg)
-      const { controller: note, value, channel } = msg
-      const controlActionConfig = _.find(config.controllers, { note })
-      const controlAction = controlActions[controlActionConfig.action]
-      if (controlAction) controlAction(controlActionConfig, value)
-    }
+  atemOnDisconnect(params) {
+    console.log(`atem : onDisconnect`, params)
+  }
 
-    const myAtem = this.atem.myAtem
-
-    myAtem.on('connected', () => {
-      setInitialState(myAtem.state)
-      // myAtem.setTransitionStyle({ nextSelection: 3, nextStyle: 2, selection: 2, style: 2})
-      // myAtem.autoTransition()
-      // console.log(getTransitionDuration())
-
-      // setInterval(() => {
-      //   if (level > 60535) level = 0
-      //   else level = level + 1000
-      //   console.log(`level:`, level)
-      //   // myAtem.setFairlightAudioMixerInputProps(1302, {
-      //   //   activeInputLevel: level
-      //   // })
-      // }, 2000)
-    })
-
-    // const diff = require("deep-object-diff").diff
-    // let lastState = {}
-
-    myAtem.on('stateChanged', (state, pathToChange) => {
-      // console.log(`pathToChange:`, pathToChange)
-      // console.log(`state:`, state)
-      // console.log(`state:`, state.fairlight.inputs[1301].sources)
-      // console.log(JSON.stringify(diff(state, lastState), 0, 2))
-      // lastState = merge({}, state)
-      runButtonStateUpdate(state, pathToChange)
-    })
+  atemOnStateChanged({ state, pathToChange }) {
+    // console.log(`pathToChange:`, pathToChange)
+    // console.log(`state:`, state)
+    this.runStateUpate(state, pathToChange)
+  }
 
 
-    function setInitialState(atemState) {
-      // console.log(`atemState:`, atemState)
-      runButtonStateUpdate(atemState, 'initial')
-    }
-
-    // **********************************************************
-    // MIDI Controller Stuff
-    // **********************************************************
-
-    function getProgramInput(me = 0) {
-      return myAtem.state.video.mixEffects[me].programInput
-    }
-
-    function getPreviewInput(me = 0) {
-      return myAtem.state.video.mixEffects[me].previewInput
-    }
-
-    function isUpstreamKeyerActive(me = 0, usk = 0) {
-      return myAtem.state.video.mixEffects[me].upstreamKeyers[usk].onAir
-    }
-
-    function getUpstreamKeyerFillSource(me = 0, usk = 0) {
-      return myAtem.state.video.mixEffects[me].upstreamKeyers[usk].fillSource
-    }
-
-    function getUpstreamKeyerType(me = 0, usk = 0) {
-      return myAtem.state.video.mixEffects[me].upstreamKeyers[usk].mixEffectKeyType
-    }
-
-    function getTransitionDuration(me = 0) {
-      return myAtem.state.video.mixEffects[me].transitionSettings.mix.rate
-    }
-
+  getActionChain(name) {
     const actionChains = {
-      camWithDve: (mainCamId) => {
-        if (getUpstreamKeyerType() !== Enums.MixEffectKeyType.DVE) {
-          myAtem.setUpstreamKeyerType({ flyEnabled: true, mixEffectKeyType: Enums.MixEffectKeyType.DVE })
+      camWithDve: (mainCamId, dveCamId = undefined) => {
+        config.dve.fillSource = dveCamId || config.dve.fillSource
+        if (this.atem.getUpstreamKeyerType() !== Enums.MixEffectKeyType.DVE) {
+          this.atem.setUpstreamKeyerType({ flyEnabled: true, mixEffectKeyType: Enums.MixEffectKeyType.DVE })
         }
-        myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
+        this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
 
         if (config.transition.type === 'cut' || config.transition.dipWhenProgramAndDveChange === false) {
-          myAtem.changePreviewInput(mainCamId)
-          if (isUpstreamKeyerActive()) {
-            myAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
+          this.atem.changePreviewInput(mainCamId)
+          if (this.atem.isUpstreamKeyerActive()) {
+            this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
           } else {
-            myAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
+            this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
           }
-          myAtem.setUpstreamKeyerFillSource(config.dve.fillSource)
-          if (config.transition.type === 'auto') { myAtem.autoTransition() } else { myAtem.cut() }
-        } else if (getUpstreamKeyerFillSource() !== config.dve.fillSource && isUpstreamKeyerActive()) {
-          myAtem.changePreviewInput(config.inputMapping.black)
-          myAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
-          if (config.transition.type === 'auto') { myAtem.autoTransition() } else { myAtem.cut() }
+          this.atem.setUpstreamKeyerFillSource(config.dve.fillSource)
+          if (config.transition.type === 'auto') { this.atem.autoTransition() } else { this.atem.cut() }
+        } else if (this.atem.getUpstreamKeyerFillSource() !== config.dve.fillSource && this.atem.isUpstreamKeyerActive()) {
+          this.atem.changePreviewInput(config.inputMapping.black)
+          this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
+          if (config.transition.type === 'auto') { this.atem.autoTransition() } else { this.atem.cut() }
           setTimeout(() => {
-            myAtem.setUpstreamKeyerFillSource(config.dve.fillSource)
-            myAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
-            myAtem.changePreviewInput(mainCamId)
-            if (config.transition.type === 'auto') { myAtem.autoTransition() } else { myAtem.cut() }
-          }, getTransitionDuration() * config.msPerFrame)
+            this.atem.setUpstreamKeyerFillSource(config.dve.fillSource)
+            this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
+            this.atem.changePreviewInput(mainCamId)
+            if (config.transition.type === 'auto') { this.atem.autoTransition() } else { this.atem.cut() }
+          }, this.atem.getTransitionDuration() * config.msPerFrame)
         } else {
-          myAtem.changePreviewInput(mainCamId)
-          if (isUpstreamKeyerActive()) {
-            myAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
-            myAtem.autoTransition()
+          this.atem.changePreviewInput(mainCamId)
+          if (this.atem.isUpstreamKeyerActive()) {
+            this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
+            this.atem.autoTransition()
           } else {
-            myAtem.setUpstreamKeyerFillSource(config.dve.fillSource)
-            myAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
+            this.atem.setUpstreamKeyerFillSource(config.dve.fillSource)
+            this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
             setTimeout(() => {
-              myAtem.autoTransition()
+              this.atem.autoTransition()
             }, config.msPerFrame * 2)
           }
         }
-
       },
+
       camSolo: (camId) => {
-        myAtem.changePreviewInput(camId)
-        if (isUpstreamKeyerActive()) {
-          myAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
+        this.atem.changePreviewInput(camId)
+        if (this.atem.isUpstreamKeyerActive()) {
+          this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
         } else {
-          myAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
+          this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: config.transition.style })
         }
-        if (config.transition.type === 'auto') { myAtem.autoTransition() } else { myAtem.cut() }
+        if (config.transition.type === 'auto') { this.atem.autoTransition() } else { this.atem.cut() }
       },
 
-      camInDve: (camId) => {
+      camInDve: (camId, when = 'auto') => {
         console.log(`setting dveFillSource:`, camId)
         console.log(`setting dveFillSource:`, config.dve.fillSource)
-        console.log(`current dveFillSource:`, getUpstreamKeyerFillSource())
-        if (config.dve.fillSource === camId && camId === getUpstreamKeyerFillSource() || config.dve.fillSource === camId && camId === getProgramInput()) {
-          actionChains.switchProgramAndDveSource()
-        } else if (config.dve.fillSource === camId) {
+        console.log(`current dveFillSource:`, this.atem.getUpstreamKeyerFillSource())
+        console.log(`when:`, when)
+        if (when === 'auto' && config.dve.fillSource === camId && camId === this.atem.getUpstreamKeyerFillSource() || config.dve.fillSource === camId && camId === this.atem.getProgramInput()) {
+          this.getActionChain('switchProgramAndDveSource')()
+        } else if (when === 'instant') {
           config.dve.fillSource = camId
-          actionChains.camWithDve(getProgramInput())
+          this.getActionChain('camWithDve')(this.atem.getProgramInput())
+        } else if ((['auto'].includes(when)) && config.dve.fillSource === camId) {
+          this.getActionChain('camWithDve')(this.atem.getProgramInput())
         } else {
           config.dve.fillSource = camId
         }
-        updateDveButtons()
-        updateButtonsViaState()
+        this.updateDveButtons()
+        this.midi.updateButtonsViaState(config.buttons)
       },
 
       switchProgramAndDveSource: () => {
-        const mainCamId = getProgramInput()
+        const mainCamId = this.atem.getProgramInput()
         const dveCamId = config.dve.fillSource
         console.log(`\n\n\n\nswitchProgramAndDveSource: ${mainCamId} : ${dveCamId}`)
         config.dve.fillSource = mainCamId
-        actionChains.camWithDve(dveCamId)
+        this.getActionChain('camWithDve')(dveCamId)
       },
 
       changeAudioGain: (options, value) => { // expected value == between 0 and 127
@@ -253,13 +201,16 @@ class MIDI2ATEM {
         const faderGain = map(value, 0, 127, range.min, range.max)
 
         for (const channel of asArray(channels)) {
-          myAtem.setFairlightAudioMixerSourceProps(audioIndex, channel, { faderGain })
+          this.atem.setFairlightAudioMixerSourceProps(audioIndex, channel, { faderGain })
         }
-        updatecontrollerState(controllersByName(options.name), { value }, 'name')
-        updateControllersViaState()
+        this.updatecontrollerState(this.getControllersByName(options.name), { value }, 'name')
+        this.midi.updateControllersViaState(config.controllers)
       }
     }
+    return actionChains[name]
+  }
 
+  getButtonAction(name) {
     const buttonActions = {
       ResetDveScale: (options, value) => {
         const { defaultValue } = options
@@ -270,13 +221,13 @@ class MIDI2ATEM {
           sizeX: config.dve.stateMain.sizeX,
           sizeY: config.dve.stateMain.sizeY,
         }
-        myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        resetControllersToDefault(controllersByAction('ChangeDveScale'))
-        updateControllersViaState()
+        this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
+        this.resetControllersToDefault(this.getControllersByAction('ChangeDveScale'))
+        this.midi.updateControllersViaState(config.controllers)
         console.log(`options.buttonLightOff:`, options.buttonsLightOff)
-        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
-        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
-        updateButtonsViaState()
+        if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
+        this.midi.updateButtonsViaState(config.buttons)
       },
       ResetDvePosition: (options, value) => {
         const { defaultValue } = options
@@ -294,12 +245,12 @@ class MIDI2ATEM {
           maskLeft: config.dve.stateDefault.maskLeft,
         }
         config.dve.stateMain = { ...config.dve.stateCurrent }
-        myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        resetControllersToDefault(controllersByAction('ChangeDvePosition'))
-        updateControllersViaState()
-        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
-        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
-        updateButtonsViaState()
+        this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
+        this.resetControllersToDefault(this.getControllersByAction('ChangeDvePosition'))
+        this.midi.updateControllersViaState(config.controllers)
+        if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
+        this.midi.updateButtonsViaState(config.buttons)
       },
       ResetDveMask: (options, value) => {
         const { defaultValue } = options
@@ -317,24 +268,24 @@ class MIDI2ATEM {
           maskLeft: config.dve.stateMain.maskLeft,
         }
         config.dve.stateMain = { ...config.dve.stateCurrent }
-        myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        resetControllersToDefault(controllersByAction('ChangeDveMask'))
-        updateControllersViaState()
-        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
-        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
-        updateButtonsViaState()
+        this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
+        this.resetControllersToDefault(this.getControllersByAction('ChangeDveMask'))
+        this.midi.updateControllersViaState(config.controllers)
+        if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
+        this.midi.updateButtonsViaState(config.buttons)
       },
 
-      ResetAudioGain: (options, value) => actionChains.changeAudioGain(options),
+      ResetAudioGain: (options, value) => this.getActionChain('changeAudioGain')(options),
 
       // ResetDveAll: () => {
       //   config.dve.stateCurrent = {
       //     ...config.dve.stateDefault,
       //   }
       //   config.dve.stateMain = { ...config.dve.stateCurrent }
-      //   myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-      //   resetControllersToDefault(controllersByAction('ChangeDveMask'))
-      //   updateControllersViaState()
+      //   this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
+      //   this.resetControllersToDefault(this.getControllersByAction('ChangeDveMask'))
+      //   this.midi.updateControllersViaState(config.controllers)
       // },
 
       ChangeDveStyle: (options, value) => {
@@ -343,47 +294,64 @@ class MIDI2ATEM {
           ...config.dve.styles[options.style],
         }
         config.dve.stateMain = { ...config.dve.stateCurrent }
-        myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        if (options.fillSource) actionChains.camWithDve(config.inputMapping[options.fillSource])
-        if (options.programInput) actionChains.camInDve(config.inputMapping[options.programInput])
-        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
-        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
-        updateButtonsViaState()
-        updateControllersViaState()
+        this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
+        if (options.programInput || options.fillSource) {
+          if (options.programInput && !options.fillSource) {
+            this.getButtonAction('ChangeProgramSource')({ programInput: options.programInput })
+          } else if (options.fillSource && !options.programInput) {
+            this.getActionChain('camInDve')(config.inputMapping[options.fillSource], 'instant')
+            // TODO: TESTING and IMPLEMENT instant method!
+          } else {
+            console.log(this.atem.getUpstreamKeyerFillSource())
+            console.log(this.atem.getProgramInput())
+            if (this.atem.isUpstreamKeyerActive() && config.inputMapping[options.fillSource] === this.atem.getUpstreamKeyerFillSource() && config.inputMapping[options.programInput] === this.atem.getProgramInput()) {
+              this.getActionChain('switchProgramAndDveSource')()
+            } else {
+              this.getActionChain('camWithDve')(config.inputMapping[options.programInput], config.inputMapping[options.fillSource])
+            }
+          }
+        }
+        if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
+        this.midi.updateButtonsViaState(config.buttons)
+        this.midi.updateControllersViaState(config.controllers)
       },
 
-      FadeToBlack: (options, value) => myAtem.fadeToBlack(),
+      FadeToBlack: (options, value) => this.atem.fadeToBlack(),
 
       AutoCutSwitch: (options, value) => {
         config.transition.type = config.transition.type === 'cut' ? 'auto' : 'cut'
-        if (config.transition.type === 'auto') buttonLightOn(buttonsByAction('AutoCutSwitch'))
-        else buttonLightOff(buttonsByAction('AutoCutSwitch'))
-        updateButtonsViaState()
+        if (config.transition.type === 'auto') this.switchButtonLightOn(this.getButtonsByAction('AutoCutSwitch'))
+        else this.switchButtonLightOff(this.getButtonsByAction('AutoCutSwitch'))
+        this.midi.updateButtonsViaState(config.buttons)
       },
 
       ChangeProgramSource: (options, value) => {
         if (options.withUpstreamKeyer) {
-          actionChains.camWithDve(config.inputMapping[options.programInput])
+          this.getActionChain('camWithDve')(config.inputMapping[options.programInput])
         } else {
-          actionChains.camSolo(config.inputMapping[options.programInput])
+          this.getActionChain('camSolo')(config.inputMapping[options.programInput])
         }
       },
 
       ChangeUpstreamKeyerFillSource: (options, value) => {
-        actionChains.camInDve(config.inputMapping[options.fillSource])
+        this.getActionChain('camInDve')(config.inputMapping[options.fillSource])
       },
 
       ChangeProgramAndDveFillSource: (options, value) => {
-        actionChains.camInDve(config.inputMapping[options.fillSource])
-        actionChains.camWithDve(config.inputMapping[options.programInput])
+        this.getActionChain('camInDve')(config.inputMapping[options.fillSource])
+        this.getActionChain('camWithDve')(config.inputMapping[options.programInput])
       },
 
       SwitchProgramAndUpstreamKeyerFillSource: (options, value) => {
-        actionChains.switchProgramAndDveSource()
+        this.getActionChain('switchProgramAndDveSource')()
       }
     }
+    return buttonActions[name]
+  }
 
-    const controlActions = {
+  getControllerAction(name) {
+    const controllerActions = {
       ChangeDveScale: (options, value) => {
         const { defaultValue } = options
         value = value || defaultValue || 0
@@ -394,12 +362,12 @@ class MIDI2ATEM {
           sizeX: value * 10,
           sizeY: value * 10,
         }
-        myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        updatecontrollerState(controllersByAction('ChangeDveScale'), { value })
-        updateControllersViaState()
-        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
-        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
-        updateButtonsViaState()
+        this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
+        this.updatecontrollerState(this.getControllersByAction('ChangeDveScale'), { value })
+        this.midi.updateControllersViaState(config.controllers)
+        if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
+        this.midi.updateButtonsViaState(config.buttons)
       },
       ChangeDvePosition: (options, value) => {
         const { defaultValue } = options
@@ -416,19 +384,19 @@ class MIDI2ATEM {
           ...config.dve.positions[pos]
         }
         config.dve.stateMain = { ...config.dve.stateCurrent }
-        myAtem.setUpstreamKeyerDVESettings({ rate: 10 })
-        myAtem.setUpstreamKeyerFlyKeyKeyframe(me, usk, Enums.FlyKeyKeyFrame.A, {
+        this.atem.setUpstreamKeyerDVESettings({ rate: 10 })
+        this.atem.setUpstreamKeyerFlyKeyKeyframe(me, usk, Enums.FlyKeyKeyFrame.A, {
           ...config.dve.stateMain,
           keyFrameId: Enums.FlyKeyKeyFrame.A,
           rate: 100,
         })
-        myAtem.runUpstreamKeyerFlyKeyTo(me, usk, Enums.FlyKeyKeyFrame.A)
-        // myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        updatecontrollerState(controllersByAction('ChangeDvePosition'), { value })
-        updateControllersViaState()
-        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
-        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
-        updateButtonsViaState()
+        this.atem.runUpstreamKeyerFlyKeyTo(me, usk, Enums.FlyKeyKeyFrame.A)
+        // this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
+        this.updatecontrollerState(this.getControllersByAction('ChangeDvePosition'), { value })
+        this.midi.updateControllersViaState(config.controllers)
+        if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
+        this.midi.updateButtonsViaState(config.buttons)
       },
       ChangeDveMask: (options, value) => {
         const { defaultValue } = options
@@ -446,177 +414,174 @@ class MIDI2ATEM {
           maskRight: Math.round(9000 - valueWithDirection),
         }
         console.log(`dveStateLocal:`, config.dve.stateCurrent)
-        myAtem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-        updatecontrollerState(controllersByAction('ChangeDveMask'), { value })
-        updateControllersViaState()
-        if (options.buttonsLightOn) buttonLightOn(options.buttonsLightOn)
-        if (options.buttonsLightOff) buttonLightOff(options.buttonsLightOff)
-        updateButtonsViaState()
+        this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
+        this.updatecontrollerState(this.getControllersByAction('ChangeDveMask'), { value })
+        this.midi.updateControllersViaState(config.controllers)
+        if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
+        if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
+        this.midi.updateButtonsViaState(config.buttons)
       },
 
-      ChangeAudioGain: (options, value) => actionChains.changeAudioGain(options, value),
+      ChangeAudioGain: (options, value) => this.getActionChain('changeAudioGain')(options, value),
     }
+    return controllerActions[name]
+  }
 
-    // Generic Midi Functions
-    function buttonLightOn(btns) {
-      btns = asArray(btns)
-      console.log(`buttonLightOn:`, btns)
-      btns = btns.map((btn) => { return { note: btn }})
-      updateButtonState(btns, { state: 'noteon', value: 127 }, 'note')
-    }
+  switchButtonLightOn(btns) {
+    btns = asArray(btns)
+    console.log(`switchButtonLightOn:`, btns)
+    btns = btns.map((btn) => { return { note: btn }})
+    this.updateButtonState(btns, { state: 'noteon', value: 127 }, 'note')
+  }
 
-    function buttonLightOff(btns) {
-      btns = asArray(btns)
-      console.log(`buttonLightOn:`, btns)
-      btns = btns.map((btn) => { return { note: btn }})
-      updateButtonState(btns, { state: 'noteoff', value: 0 }, 'note')
-    }
+  switchButtonLightOff(btns) {
+    btns = asArray(btns)
+    console.log(`switchButtonLightOff:`, btns)
+    btns = btns.map((btn) => { return { note: btn }})
+    this.updateButtonState(btns, { state: 'noteoff', value: 0 }, 'note')
+  }
 
-    function buttonsByAction(action) {
-      return _.map(_.filter(config.buttons, (el) => el.action === action), (el) => el.note)
-    }
+  getButtonsByAction(action) {
+    return _.map(_.filter(config.buttons, (el) => el.action === action), (el) => el.note)
+  }
 
-    function controllersByAction(action) {
-      return _.filter(config.controllers, (el) => el.action === action)
-    }
+  getControllersByAction(action) {
+    return _.filter(config.controllers, (el) => el.action === action)
+  }
 
-    function controllersByName(name) {
-      return _.filter(config.controllers, (el) => el.name === name)
-    }
+  getControllersByName(name) {
+    return _.filter(config.controllers, (el) => el.name === name)
+  }
 
-    function updateButtonsViaState() {
-      console.log(`updateButtonsViaState`)
-      config.buttons.forEach((btn) => {
-        midi.send(btn.state || 'noteoff', {
-          note: btn.note,
-          velocity: btn.value || btn.defaultValue || 0,
-          channel: btn.channel || config.midi.outputChannel,
-        })
-      })
-    }
+  updateButtonState(buttonStates, overwrite = {}, via = 'action') {
+    buttonStates = asArray(buttonStates)
+    buttonStates = buttonStates.map((buttonState) => {
+      return { state: 'noteoff', value: buttonState.defaultValue || 0, ...buttonState, ...overwrite}
+    })
+    config.buttons = config.buttons.map((button) => {
+      let updatedButtonState = _.find(buttonStates, (el) => el[via] === button[via])
+      if (updatedButtonState) {
+        button.value = updatedButtonState.value
+        button.state = updatedButtonState.state
+      }
+      return button
+    })
+  }
 
-    function updateButtonState(buttonStates, overwrite = {}, via = 'action') {
-      buttonStates = asArray(buttonStates)
-      buttonStates = buttonStates.map((buttonState) => {
-        return { state: 'noteoff', value: buttonState.defaultValue || 0, ...buttonState, ...overwrite}
-      })
-      config.buttons = config.buttons.map((button) => {
-        let updatedButtonState = _.find(buttonStates, (el) => el[via] === button[via])
-        if (updatedButtonState) {
-          button.value = updatedButtonState.value
-          button.state = updatedButtonState.state
-        }
-        return button
-      })
-    }
+  updateDveButtons() {
+    const buttonsForDveSelection = config.feedback.buttonsForActiveUpstreamKeyerFillSource
+    const nameOfInput = Object.keys(config.inputMapping).find(key => config.inputMapping[key] === config.dve.fillSource)
+    const buttonActiveDveFillSource = buttonsForDveSelection[nameOfInput]
+    this.switchButtonLightOff(_.difference(_.flatten(Object.values(buttonsForDveSelection)), buttonActiveDveFillSource))
+    this.switchButtonLightOn(buttonActiveDveFillSource)
+  }
 
-    function updateDveButtons() {
-      const buttonsForDveSelection = config.feedback.buttonsForActiveUpstreamKeyerFillSource
-      const nameOfInput = Object.keys(config.inputMapping).find(key => config.inputMapping[key] === config.dve.fillSource)
-      const buttonActiveDveFillSource = buttonsForDveSelection[nameOfInput]
-      buttonLightOff(_.difference(_.flatten(Object.values(buttonsForDveSelection)), buttonActiveDveFillSource))
-      buttonLightOn(buttonActiveDveFillSource)
-    }
+  updatecontrollerState(controllerStates, overwrite = {}, via = 'action') {
+    controllerStates = asArray(controllerStates)
+    controllerStates = controllerStates.map((controllerState) => {
+      return { state: 'cc', value: controllerState.defaultValue || 0, ...controllerState, ...overwrite}
+    })
+    config.controllers = config.controllers.map((controller) => {
+      let updatedControllerState = _.find(controllerStates, (el) => el[via] === controller[via])
+      if (updatedControllerState) {
+        controller.value = updatedControllerState.value
+      }
+      return controller
+    })
+  }
 
-    function updateControllersViaState() {
-      console.log(`updateControllersViaState`)
-      const { controllers } = config
-      controllers.forEach((controller) => {
-        const { state, note, value, channel, defaultValue } = controller
-        midi.sendControllerChange({
-          controller: note,
-          value: value || defaultValue || 0,
-          channel: channel || config.midi.outputChannel,
-        })
-      })
-    }
+  resetControllersToDefault(controllerStates) {
+    console.log(`resetControllersToDefault:`, controllerStates)
+    controllerStates = asArray(controllerStates)
+    const { controllers } = config
+    controllerStates = controllerStates.map((controllerState) => merge(controllerState, { state: 'cc', value: controllerState.defaultValue || 0 }))
+    controllers.map((controller) => {
+      let updatedControllerState = _.find(controllerStates, (el) => el.action === controller.action)
+      if (updatedControllerState) controller.value = updatedControllerState.value
+      return controller
+    })
+  }
 
-    function updatecontrollerState(controllerStates, overwrite = {}, via = 'action') {
-      controllerStates = asArray(controllerStates)
-      controllerStates = controllerStates.map((controllerState) => {
-        return { state: 'cc', value: controllerState.defaultValue || 0, ...controllerState, ...overwrite}
-      })
-      config.controllers = config.controllers.map((controller) => {
-        let updatedControllerState = _.find(controllerStates, (el) => el[via] === controller[via])
-        if (updatedControllerState) {
-          controller.value = updatedControllerState.value
-        }
-        return controller
-      })
-    }
-
-    function resetControllersToDefault(controllerStates) {
-      console.log(`resetControllersToDefault:`, controllerStates)
-      controllerStates = asArray(controllerStates)
-      const { controllers } = config
-      controllerStates = controllerStates.map((controllerState) => merge(controllerState, { state: 'cc', value: controllerState.defaultValue || 0 }))
-      controllers.map((controller) => {
-        let updatedControllerState = _.find(controllerStates, (el) => el.action === controller.action)
-        if (updatedControllerState) controller.value = updatedControllerState.value
-        return controller
-      })
-    }
-
-    function runButtonStateUpdate(state, pathToChange = null) {
-      const me = 0
-      const usk = 0
-      pathToChange = asArray(pathToChange)
-      if (pathToChange.length !== 1 || !pathToChange.includes('info.lastTime')) console.log(`pathToChange:`, pathToChange)
-      for (const path of pathToChange) {
-        const isInitial = (path === 'initial')
-        if (isInitial) {
-          // find all ChangeAudioGain controllers and set them to their default
-          for (const controller of config.controllers) {
-            if (controller.defaultValue) {
-              const controlAction = controlActions[controller.action]
-              console.log(`controlAction:`, controller.action)
-              if (controlAction) controlActions[controller.action](controller)
-            }
-          }
-        }
-        if (isInitial || path.includes('video.mixEffects')) {
-          const programInput = state.video.mixEffects[me].programInput
-          const hasDve = state.video.mixEffects[me].upstreamKeyers[usk].onAir
-          const buttonsForProgramInputWithoutDve = config.feedback.buttonsForProgramInputWithoutDve
-          const buttonsForProgramInputWithDve = config.feedback.buttonsForProgramInputWithDve
-          const nameOfInput = Object.keys(config.inputMapping).find(key => config.inputMapping[key] === programInput)
-          const buttonsForProgramInput = (hasDve) ? buttonsForProgramInputWithDve[nameOfInput] : buttonsForProgramInputWithoutDve[nameOfInput]
-          const buttonsForProgramInputAll = [..._.flatten(Object.values(buttonsForProgramInputWithoutDve)), ..._.flatten(Object.values(buttonsForProgramInputWithDve))]
-          buttonLightOff(_.difference(buttonsForProgramInputAll, buttonsForProgramInput))
-          buttonLightOn(buttonsForProgramInput)
-
-          updateDveButtons()
-
-          if (config.transition.type === 'auto') buttonLightOn(buttonsByAction('AutoCutSwitch'))
-          else buttonLightOff(buttonsByAction('AutoCutSwitch'))
-
-          if (state.video.mixEffects[me].fadeToBlack.isFullyBlack) {
-            buttonLightOn(buttonsByAction('FadeToBlack'))
-          } else {
-            buttonLightOff(buttonsByAction('FadeToBlack'))
+  runStateUpate(state, pathToChange = null) {
+    const me = 0
+    const usk = 0
+    pathToChange = asArray(pathToChange)
+    if (pathToChange.length !== 1 || !pathToChange.includes('info.lastTime')) console.log(`pathToChange:`, pathToChange)
+    for (const path of pathToChange) {
+      const isInitial = (path === 'initial')
+      if (isInitial) {
+        // find all ChangeAudioGain controllers and set them to their default
+        for (const controller of config.controllers) {
+          if (controller.defaultValue) {
+            const controlAction = this.getControllerAction(controller.action)
+            if (controlAction) controlAction(controller)
           }
         }
       }
+      if (isInitial || path.includes('video.mixEffects')) {
+        const programInput = state.video.mixEffects[me].programInput
+        const hasDve = state.video.mixEffects[me].upstreamKeyers[usk].onAir
+        const buttonsForProgramInputWithoutDve = config.feedback.buttonsForProgramInputWithoutDve
+        const buttonsForProgramInputWithDve = config.feedback.buttonsForProgramInputWithDve
+        const nameOfInput = Object.keys(config.inputMapping).find(key => config.inputMapping[key] === programInput)
+        const buttonsForProgramInput = (hasDve) ? buttonsForProgramInputWithDve[nameOfInput] : buttonsForProgramInputWithoutDve[nameOfInput]
+        const buttonsForProgramInputAll = [..._.flatten(Object.values(buttonsForProgramInputWithoutDve)), ..._.flatten(Object.values(buttonsForProgramInputWithDve))]
+        this.switchButtonLightOff(_.difference(buttonsForProgramInputAll, buttonsForProgramInput))
+        this.switchButtonLightOn(buttonsForProgramInput)
 
-      updateControllersViaState()
-      updateButtonsViaState()
+        this.updateDveButtons()
+
+        if (config.transition.type === 'auto') this.switchButtonLightOn(this.getButtonsByAction('AutoCutSwitch'))
+        else this.switchButtonLightOff(this.getButtonsByAction('AutoCutSwitch'))
+
+        if (state.video.mixEffects[me].fadeToBlack.isFullyBlack) {
+          this.switchButtonLightOn(this.getButtonsByAction('FadeToBlack'))
+        } else {
+          this.switchButtonLightOff(this.getButtonsByAction('FadeToBlack'))
+        }
+      }
     }
+
+    this.midi.updateControllersViaState(config.controllers)
+    this.midi.updateButtonsViaState(config.buttons)
   }
 
-  getStatus() {
-    return this.status
-  }
+  setup() {
+    // do something when app is closing
+    // process.on('exit', this.exitHandler.bind(this, { exit: true }))
+    // catches ctrl+c event
+    process.on('SIGINT', this.exitHandler.bind(this, { cleanup: true }))
+    // catches "kill pid" (for example: nodemon restart)
+    process.on('SIGUSR1', this.exitHandler.bind(this, { exit: true }))
+    process.on('SIGUSR2', this.exitHandler.bind(this, { exit: true }))
+    // catches uncaught exceptions
+    process.on('uncaughtException', this.exitHandler.bind(this, { exit: true }))
+    process.on('unhandledRejection', async (reason) => console.log(`UNHANDLED:`, reason))
 
-  connect(device) {
-    this.status[device].connected = true
-    console.log(`connect:`, device)
-  }
+    this.midi = new MIDI()
 
-  disconnect(device) {
-    this.status[device].connected = false
-    console.log(`disconnect:`, device)
-  }
+    this.midi.on('noteOn', this.midiOnNoteOn.bind(this))
+    this.midi.on('noteOff', this.midiOnNoteOff.bind(this))
+    this.midi.on('controllerChange', this.midiOnControllerChange.bind(this))
+    this.midi.on('connect', this.midiOnConnect.bind(this))
+    this.midi.on('disconnect', this.midiOnDisconnect.bind(this))
 
+    this.midi.connect({
+      inputDeviceName: config.midi.inputDeviceName || config.midi.deviceName,
+      outputDeviceName: config.midi.outputDeviceName || config.midi.deviceName,
+      outputChannel: config.midi.outputChannel,
+    })
+
+    this.atem = new ATEM()
+
+    this.atem.on('connected', this.atemOnConnected.bind(this))
+    this.atem.on('disconnect', this.atemOnDisconnect.bind(this))
+    this.atem.on('stateChanged', this.atemOnStateChanged.bind(this))
+
+    this.atem.connect({
+      address: config.atem.address,
+    })
+  }
 }
 
 async function main() {

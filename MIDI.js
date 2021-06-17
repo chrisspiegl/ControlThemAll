@@ -1,52 +1,28 @@
 import midi from 'easymidi'
+import debug from 'debug'
+import { throttle } from 'throttle-debounce'
+import { EventEmitter } from 'inf-ee'
+
 import { config } from './config.js'
 
 const CONNECTION_TIMEOUT = 5000 // ms
 const CONNECTION_RETRY_INTERVAL = 1000 // ms
+const THROTTLE_BUTTON_UPDATE = 250 // ms
+const THROTTLE_CONTROLLER_UPDATE = 250 // ms
 
 export const ConnectionState = {
   Closed: 0x00,
   Connected: 0x01,
 }
 
-export class MIDI {
-  constructor(options) {
+export class MIDI extends EventEmitter {
+  constructor(options = {}) {
+    super()
     console.log(`Constructing MIDI Controller`)
 
+    this.componentName = 'MIDI Controller'
+
     this.sessionId = -1
-    this.onDisconnect = options.onDisconnect || undefined
-    this.onConnect = options.onConnect || undefined
-
-    this.onMessage = options.onMessage || undefined
-    this.onNoteOff = options.onNoteOff || undefined
-    this.onNoteOn = options.onNoteOn || undefined
-    this.onPolyAftertouch = options.onPolyAftertouch || undefined
-    this.onControllerChange = options.onControllerChange || options.onCc || undefined
-    this.onProgram = options.onProgram || undefined
-    this.onChannelAftertouch = options.onChannelAftertouch || undefined
-    this.onPitch = options.onPitch || undefined
-    this.onPosition = options.onPosition || undefined
-    this.onSelect = options.onSelect || undefined
-    this.onClock = options.onClock || undefined
-    this.onStart = options.onStart || undefined
-    this.onContinue = options.onContinue || undefined
-    this.onStop = options.onStop || undefined
-    this.onReset = options.onReset || undefined
-
-    // input.on('noteoff', msg => console.log('noteoff', msg.note, msg.velocity, msg.channel))
-    // input.on('noteon', msg => console.log('noteon', msg.note, msg.velocity, msg.channel))
-    // input.on('poly aftertouch', msg => console.log('poly aftertouch', msg.note, msg.pressure, msg.channel))
-    // input.on('cc', msg => console.log('cc', msg.controller, msg.value, msg.channel))
-    // input.on('program', msg => console.log('program', msg.number, msg.channel))
-    // input.on('channel aftertouch', msg => console.log('channel aftertouch', msg.pressure, msg.channel))
-    // input.on('pitch', msg => console.log('pitch', msg.value, msg.channel))
-    // input.on('position', msg => console.log('position', msg.value))
-    // input.on('select', msg => console.log('select', msg.song))
-    // input.on('clock', () => console.log('clock'))
-    // input.on('start', () => console.log('start'))
-    // input.on('continue', () => console.log('continue'))
-    // input.on('stop', () => console.log('stop'))
-    // input.on('reset', () => console.log('reset'))
 
     this._reconnectTimer = undefined
     this._lastReceivedAt = undefined
@@ -71,14 +47,14 @@ export class MIDI {
         }
 
         if (!this.isConnected()) {
-          console.log(`MIDI Connection Check Failed: sending for connection restart`)
+          this.log('info', `MIDI Connection Check Failed: sending for connection restart`)
           try {
             await this.restartConnection()
           } catch (e) {
-            console.log(`MIDI Reconnect failed: ${e}`)
+            this.log('info', `MIDI Reconnect failed: ${e}`)
           }
         } else {
-          // console.log(`MIDI Connection Check: still connected`)
+          // this.log('info', `MIDI Connection Check: still connected`)
         }
       }, CONNECTION_RETRY_INTERVAL)
     }
@@ -90,12 +66,12 @@ export class MIDI {
     // }
   }
 
-  async connect(options) {
+  async connect(options = {}) {
     this._inputDeviceName = options.inputDeviceName || 'X-TOUCH MINI'
     this._outputDeviceName = options.outputDeviceName || 'X-TOUCH MINI'
     this._outputChannel = options.outputChannel || 10
     this.startTimers()
-    this.restartConnection()
+    await this.restartConnection()
   }
 
   async disconnect() {
@@ -109,7 +85,7 @@ export class MIDI {
     if (this._output) this._output.close()
 
     this._connectionState = ConnectionState.Closed
-    if (this.onDisconnect) await this.onDisconnect({ sessionId: this.sessionId })
+    this.emit('disconnect', { sessionId: this.sessionId })
   }
 
   async restartConnection() {
@@ -124,22 +100,22 @@ export class MIDI {
         this._output = undefined
       }
       this._connectionState = ConnectionState.Closed
-      if (this.onDisconnect) await this.onDisconnect({ sessionId: this.sessionId })
+      this.emit('disconnect', { sessionId: this.sessionId })
     }
 
-    console.log('MIDI Trying to Reconnect')
+    this.log('warn', `Trying to Reconnect`)
 
     // Try doing reconnect
     const midiInputsByName = midi.getInputs()
     const midiOutputsByName = midi.getOutputs()
 
     if (!midiInputsByName.includes(this._inputDeviceName)) {
-      console.log(`MIDI Reconnect failed: midi input device '${this._inputDeviceName}' not found`)
+      this.log('info', `Reconnect failed: input device '${this._inputDeviceName}' not found`)
       return
     }
 
     if (!midiOutputsByName.includes(this._outputDeviceName)) {
-      console.log(`MIDI Reconnect failed: midi output device '${this._outputDeviceName}' not found`)
+      this.log('info', `Reconnect failed: output device '${this._outputDeviceName}' not found`)
       return
     }
 
@@ -148,40 +124,42 @@ export class MIDI {
 
     this._connectionState = ConnectionState.Connected
     this.sessionId = this.sessionId + 1
-    if (this.onConnect) this.onConnect({
-      isReconnect: (this.sessionId > 0),
-      sessionId: this.sessionId,
-    })
+    this.emit('connect', { isReconnect: (this.sessionId > 0), sessionId: this.sessionId })
   }
 
   connectOutput() {
     this._output = new midi.Output(this._outputDeviceName)
-    console.log(`MIDI Connected Output: ${this._outputDeviceName}`)
+    this.log('info', `Connected Output: ${this._outputDeviceName}`)
   }
 
   connectInput() {
     this._input = new midi.Input(this._inputDeviceName)
-    console.log(`MIDI Connected Input: ${this._inputDeviceName}`)
+    this.log('info', `Connected Input: ${this._inputDeviceName}`)
 
     this._input.on('message', (msg) => {
       this._lastReceivedAt = Date.now()
-      console.log(`${this._inputDeviceName}:`, msg);
+      this.log('info', `${this._inputDeviceName}:`, msg);
     })
 
-    if (this.onNoteOff) this._input.on('noteoff', this.onNoteOff)
-    if (this.onNoteOn) this._input.on('noteon', this.onNoteOn)
-    if (this.onPolyAftertouch) this._input.on('poly aftertouch', this.onPolyAftertouch)
-    if (this.onControllerChange) this._input.on('cc', this.onControllerChange)
-    if (this.onProgram) this._input.on('program', this.onProgram)
-    if (this.onChannelAftertouch) this._input.on('channel aftertouch', this.onChannelAftertouch)
-    if (this.onPitch) this._input.on('pitch', this.onPitch)
-    if (this.onPosition) this._input.on('position', this.onPosition)
-    if (this.onSelect) this._input.on('select', this.onSelect)
-    if (this.onClock) this._input.on('clock', this.onClock)
-    if (this.onStart) this._input.on('start', this.onStart)
-    if (this.onContinue) this._input.on('continue', this.onContinue)
-    if (this.onStop) this._input.on('stop', this.onStop)
-    if (this.onReset) this._input.on('reset', this.onReset)
+    this._input.on('noteoff', (params) => this.emit('noteoff', params))
+    this._input.on('noteoff', (params) => this.emit('noteOff', params))
+    this._input.on('noteon', (params) => this.emit('noteon', params))
+    this._input.on('noteon', (params) => this.emit('noteOn', params))
+    this._input.on('poly aftertouch', (params) => this.emit('poly aftertouch', params))
+    this._input.on('poly aftertouch', (params) => this.emit('polyAftertouch', params))
+    this._input.on('cc', (params) => this.emit('cc', params))
+    this._input.on('cc', (params) => this.emit('controllerChange', params))
+    this._input.on('program', (params) => this.emit('program', params))
+    this._input.on('channel aftertouch', (params) => this.emit('channel aftertouch', params))
+    this._input.on('channel aftertouch', (params) => this.emit('channelAftertouch', params))
+    this._input.on('pitch', (params) => this.emit('pitch', params))
+    this._input.on('position', (params) => this.emit('position', params))
+    this._input.on('select', (params) => this.emit('select', params))
+    this._input.on('clock', (params) => this.emit('clock', params))
+    this._input.on('start', (params) => this.emit('start', params))
+    this._input.on('continue', (params) => this.emit('continue', params))
+    this._input.on('stop', (params) => this.emit('stop', params))
+    this._input.on('reset', (params) => this.emit('reset', params))
   }
 
   isConnected() {
@@ -190,20 +168,20 @@ export class MIDI {
     let connectionCheckFailed = false
 
     if (typeof this._input === 'undefined') {
-      // console.log('MIDI Connection Check Failed: no connection established')
+      // this.log('info', 'Connection Check Failed: no connection established')
       return false
     }
     if (!connectionCheckFailed && typeof this._output === 'undefined') {
-      // console.log('MIDI Connection Check Failed: no connection established')
+      // this.log('info', 'Connection Check Failed: no connection established')
       return false
     }
 
     if (!connectionCheckFailed && !midiInputsByName.includes(this._inputDeviceName)) {
-      // console.log(`MIDI Connection Check Failed: midi input device '${this._inputDeviceName}' not found`)
+      // this.log('info', `Connection Check Failed: input device '${this._inputDeviceName}' not found`)
       return false
     }
     if (!connectionCheckFailed && !midiOutputsByName.includes(this._outputDeviceName)) {
-      // console.log(`MIDI Connection Check Failed: midi output device '${this._outputDeviceName}' not found`)
+      // this.log('info', `Connection Check Failed: output device '${this._outputDeviceName}' not found`)
       return false
     }
 
@@ -220,7 +198,7 @@ export class MIDI {
     options = { ...optionsDefault, ...options }
     if (this.isConnected()) this._output.send(msgType || 'noteoff', options)
     else {
-      console.log(`COMMAND NOT SENT BECAUSE MIDI CONTROLLER NOT CONNECTED`)
+      this.log('info', `NOT CONNECTED & COMMAND NOT SENT`)
     }
   }
 
@@ -238,6 +216,62 @@ export class MIDI {
 
   sendControllerChange(options) {
     this.send('cc', options)
+  }
+
+  updateButtonsViaStateInstant(buttonStates) {
+    this.log('debug', 'updateButtonsViaStateInstant')
+    buttonStates.forEach((btn) => {
+      this.send(btn.state || 'noteoff', {
+        note: btn.note,
+        velocity: btn.value || btn.defaultValue || 0,
+        channel: btn.channel || config.midi.outputChannel,
+      })
+    })
+  }
+
+  updateButtonsViaState(buttonStates, instant = false) {
+    this.log('debug', 'updateButtonsViaState')
+    if (instant) this.updateButtonsViaStateInstant(buttonStates)
+    else {
+      if (!this.updateButtonsViaStateThrottled) {
+        this.updateButtonsViaStateThrottled = throttle(THROTTLE_BUTTON_UPDATE, false, (buttonStates) => {
+          this.log('debug', 'updateButtonsViaStateThrottled')
+          return this.updateButtonsViaStateInstant(buttonStates)
+        })
+      }
+      this.updateButtonsViaStateThrottled(buttonStates)
+    }
+  }
+
+  updateControllersViaStateInstant(controllerStates) {
+    this.log('debug', 'updateControllersViaStateInstant')
+    controllerStates.forEach((controller) => {
+      const { state, note, value, channel, defaultValue } = controller
+      this.sendControllerChange({
+        controller: note,
+        value: value || defaultValue || 0,
+        channel: channel || config.midi.outputChannel,
+      })
+    })
+  }
+
+  updateControllersViaState(controllerStates, instant = false) {
+    this.log('debug', 'updateControllersViaState')
+    if (instant) this.updateControllersViaStateInstant(controllerStates)
+    else {
+      if (!this.updateControllersViaStateThrottled) {
+        this.updateControllersViaStateThrottled = throttle(THROTTLE_CONTROLLER_UPDATE, false, (controllerStates) => {
+          this.log('debug', 'updateControllersViaStateThrottled')
+          return this.updateControllersViaStateInstant(controllerStates)
+        })
+      }
+      this.updateControllersViaStateThrottled(controllerStates)
+    }
+  }
+
+  log(level, ...args) {
+    if (this.onLog) this.onLog(this.componentName, level.toLowerCase(), args)
+    else debug(`sio:midi:${level.toLowerCase()}`, args)
   }
 }
 

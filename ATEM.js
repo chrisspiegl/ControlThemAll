@@ -1,30 +1,133 @@
+import debug from 'debug'
 import { Atem } from 'atem-connection'
+import { EventEmitter } from 'inf-ee'
 import { config } from './config.js'
 
-export class ATEM {
-  constructor(master) {
-    this.master = master
+const ATEM_DEFAULT_ADDRESS = '192.168.10.240'
+
+export class ATEM extends EventEmitter {
+  constructor(options = {}) {
+    super()
     console.log(`Constructing ATEM Controller`)
-    this.myAtem = new Atem()
 
-    // this.myAtem.on('debug', console.log)
-    this.myAtem.on('info', console.log)
-    this.myAtem.on('error', console.error)
+    this.componentName = 'ATEM Controller'
 
-    this.myAtem.on('disconnected', () => {
-      console.log('ATEM Connection lost')
-      this.master.disconnect('atem')
+    this.sessionId = -1
+
+    this._address = options.address || ATEM_DEFAULT_ADDRESS
+    this._atem = undefined
+
+    return this
+  }
+
+  connect(options = {}) {
+    this._address = options.address || ATEM_DEFAULT_ADDRESS
+
+    this._atem = new Atem()
+
+    this._atem.on('debug', (msg) => this.log('debug', msg))
+    this._atem.on('info', (msg) => this.log('info', msg))
+    this._atem.on('error', (msg) => this.log('error', msg))
+
+    this._atem.on('disconnected', () => {
+      this.log('info', 'Disconnected')
+      this.emit('disconnect', { sessionId: this.sessionId })
     })
 
-    this.myAtem.on('connected', () => {
-      console.log(`ATEM Connected`)
-      this.master.connect('atem')
+    this._atem.on('connected', () => {
+      this.log('info', `Connected`)
+      this.sessionId = this.sessionId + 1
+      this.emit('connected', { isReconnect: (this.sessionId > 0), sessionId: this.sessionId })
     })
 
-    this.myAtem.connect(config.atem.address).catch((e) => {
-      console.error(e)
-      this.master.disconnect('atem')
+    this._atem.on('stateChanged', (state, pathToChange) => this.emit('stateChanged', { state, pathToChange }))
+    this._atem.on('receivedCommand', (command) => this.emit('receivedCommand', { command }))
+
+    this._atem.connect(this._address).catch((e) => {
+      this.log('error', e)
     })
+  }
+
+  disconnect() {
+    this._atem.disconnect()
+  }
+
+  getState() {
+    return this._atem.state
+  }
+
+  getProgramInput(me = 0) {
+    return this._atem.state.video.mixEffects[me].programInput
+  }
+
+  getPreviewInput(me = 0) {
+    return this._atem.state.video.mixEffects[me].previewInput
+  }
+
+  isUpstreamKeyerActive(me = 0, usk = 0) {
+    return this._atem.state.video.mixEffects[me].upstreamKeyers[usk].onAir
+  }
+
+  getUpstreamKeyerFillSource(me = 0, usk = 0) {
+    return this._atem.state.video.mixEffects[me].upstreamKeyers[usk].fillSource
+  }
+
+  getUpstreamKeyerType(me = 0, usk = 0) {
+    return this._atem.state.video.mixEffects[me].upstreamKeyers[usk].mixEffectKeyType
+  }
+
+  getTransitionDuration(me = 0) {
+    return this._atem.state.video.mixEffects[me].transitionSettings.mix.rate
+  }
+
+  setUpstreamKeyerType(...args) {
+    return this._atem.setUpstreamKeyerType.apply(this._atem, args)
+  }
+
+  setUpstreamKeyerDVESettings(...args) {
+    return this._atem.setUpstreamKeyerDVESettings.apply(this._atem, args)
+  }
+
+  changePreviewInput(...args) {
+    return this._atem.changePreviewInput.apply(this._atem, args)
+  }
+
+  setTransitionStyle(...args) {
+    return this._atem.setTransitionStyle.apply(this._atem, args)
+  }
+
+  setUpstreamKeyerFillSource(...args) {
+    return this._atem.setUpstreamKeyerFillSource.apply(this._atem, args)
+  }
+
+  autoTransition(...args) {
+    return this._atem.autoTransition.apply(this._atem, args)
+  }
+
+  cut(...args) {
+    return this._atem.cut.apply(this._atem, args)
+  }
+
+  setFairlightAudioMixerSourceProps(...args) {
+    return this._atem.setFairlightAudioMixerSourceProps.apply(this._atem, args)
+  }
+
+  fadeToBlack(...args) {
+    return this._atem.fadeToBlack.apply(this._atem, args)
+  }
+
+  setUpstreamKeyerFlyKeyKeyframe(...args) {
+    return this._atem.setUpstreamKeyerFlyKeyKeyframe.apply(this._atem, args)
+  }
+
+  runUpstreamKeyerFlyKeyTo(...args) {
+    return this._atem.runUpstreamKeyerFlyKeyTo.apply(this._atem, args)
+  }
+
+
+  log(level, ...args) {
+    if (this.onLog) this.onLog(this.componentName, level.toLowerCase(), args)
+    else debug(`sio:atem:${level.toLowerCase()}`, args)
   }
 }
 
