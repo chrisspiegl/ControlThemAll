@@ -59,11 +59,11 @@ class MIDI2ATEM extends EventEmitter {
   }
 
   midiOnNoteOn(msg) {
-    console.log(`NOTE ON : msg:`, msg)
+    console.log(`NOTE ON:`, msg)
   }
 
   midiOnNoteOff(msg) {
-    console.log(`noteoff with msg:`, msg)
+    console.log(`NOTE OFF:`, msg)
     const { note, velocity: value, channel } = msg
     const buttonConfig = _.find(config.buttons, { note })
     console.log(`buttonConfig:`, buttonConfig)
@@ -72,7 +72,7 @@ class MIDI2ATEM extends EventEmitter {
   }
 
   midiOnControllerChange(msg) {
-    console.log(`cc with msg:`, msg)
+    console.log(`CONTROLLER CHANGE:`, msg)
     const { controller: note, value, channel } = msg
     const controllerConfig = _.find(config.controllers, { note })
     console.log(`controllerConfig:`, controllerConfig)
@@ -100,17 +100,15 @@ class MIDI2ATEM extends EventEmitter {
   }
 
   atemOnConnected(params) {
-    console.log(`atem : onConnect`, params)
+    console.log(`atem : connected`, params)
     this.runStateUpate(this.atem.getState(), 'initial')
   }
 
   atemOnDisconnect(params) {
-    console.log(`atem : onDisconnect`, params)
+    console.log(`atem : disconnect`, params)
   }
 
   atemOnStateChanged({ state, pathToChange }) {
-    // console.log(`pathToChange:`, pathToChange)
-    // console.log(`state:`, state)
     this.runStateUpate(state, pathToChange)
   }
 
@@ -169,10 +167,10 @@ class MIDI2ATEM extends EventEmitter {
       },
 
       camInDve: (camId, when = 'auto') => {
-        console.log(`setting dveFillSource:`, camId)
-        console.log(`setting dveFillSource:`, config.dve.fillSource)
-        console.log(`current dveFillSource:`, this.atem.getUpstreamKeyerFillSource())
-        console.log(`when:`, when)
+        // console.log(`setting dveFillSource:`, camId)
+        // console.log(`setting dveFillSource:`, config.dve.fillSource)
+        // console.log(`current dveFillSource:`, this.atem.getUpstreamKeyerFillSource())
+        // console.log(`when:`, when)
         if (when === 'auto' && config.dve.fillSource === camId && camId === this.atem.getUpstreamKeyerFillSource() || config.dve.fillSource === camId && camId === this.atem.getProgramInput()) {
           this.getActionChain('switchProgramAndDveSource')()
         } else if (when === 'instant') {
@@ -190,7 +188,6 @@ class MIDI2ATEM extends EventEmitter {
       switchProgramAndDveSource: () => {
         const mainCamId = this.atem.getProgramInput()
         const dveCamId = config.dve.fillSource
-        console.log(`\n\n\n\nswitchProgramAndDveSource: ${mainCamId} : ${dveCamId}`)
         config.dve.fillSource = mainCamId
         this.getActionChain('camWithDve')(dveCamId)
       },
@@ -207,7 +204,7 @@ class MIDI2ATEM extends EventEmitter {
         }
         this.updatecontrollerState(this.getControllersByName(options.name), { value }, 'name')
         this.midi.updateControllersViaState(config.controllers)
-      }
+      },
     }
     return actionChains[name]
   }
@@ -226,7 +223,6 @@ class MIDI2ATEM extends EventEmitter {
         this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
         this.resetControllersToDefault(this.getControllersByAction('ChangeDveScale'))
         this.midi.updateControllersViaState(config.controllers)
-        console.log(`options.buttonLightOff:`, options.buttonsLightOff)
         if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
         if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
         this.midi.updateButtonsViaState(config.buttons)
@@ -302,10 +298,7 @@ class MIDI2ATEM extends EventEmitter {
             this.getButtonAction('ChangeProgramSource')({ programInput: options.programInput })
           } else if (options.fillSource && !options.programInput) {
             this.getActionChain('camInDve')(config.inputMapping[options.fillSource], 'instant')
-            // TODO: TESTING and IMPLEMENT instant method!
           } else {
-            console.log(this.atem.getUpstreamKeyerFillSource())
-            console.log(this.atem.getProgramInput())
             if (this.atem.isUpstreamKeyerActive() && config.inputMapping[options.fillSource] === this.atem.getUpstreamKeyerFillSource() && config.inputMapping[options.programInput] === this.atem.getProgramInput()) {
               this.getActionChain('switchProgramAndDveSource')()
             } else {
@@ -357,7 +350,6 @@ class MIDI2ATEM extends EventEmitter {
       ChangeDveScale: (options, value) => {
         const { defaultValue } = options
         value = value || defaultValue || 0
-        console.log(`value:`, value)
         config.dve.stateCurrent = {
           ...config.dve.stateDefault,
           ...config.dve.stateMain,
@@ -378,8 +370,6 @@ class MIDI2ATEM extends EventEmitter {
         const usk = 0
         // const pos = Math.floor(map(value, 0, 127, 0, Object.keys(positions).length))
         const pos = Math.floor(value % config.dve.positions.length)
-        console.log(`pos:`, pos)
-        console.log(`positions[pos]:`, config.dve.positions[pos])
         config.dve.stateCurrent = {
           ...config.dve.stateDefault,
           ...config.dve.stateCurrent,
@@ -403,19 +393,19 @@ class MIDI2ATEM extends EventEmitter {
       ChangeDveMask: (options, value) => {
         const { defaultValue } = options
         value = value || defaultValue || 0
-        console.log(`value:`, value)
+        // console.log(`value:`, value)
         let valueWithDirection = map(value, 0, 128, 0, 10000)
-        console.log(`valueWithDirection:`, valueWithDirection)
+        // console.log(`valueWithDirection:`, valueWithDirection)
         valueWithDirection = valueWithDirection % 5000
-        console.log(`valueWithDirection:`, valueWithDirection)
+        // console.log(`valueWithDirection:`, valueWithDirection)
         valueWithDirection = (value < 64) ? valueWithDirection - (10000/2) : valueWithDirection
-        console.log(`valueWithDirection:`, valueWithDirection)
+        // console.log(`valueWithDirection:`, valueWithDirection)
         config.dve.stateCurrent = {
           positionX: Math.round(config.dve.stateMain.positionX - (valueWithDirection) / 2),
           maskLeft: Math.round(9000 + valueWithDirection),
           maskRight: Math.round(9000 - valueWithDirection),
         }
-        console.log(`dveStateLocal:`, config.dve.stateCurrent)
+        // console.log(`dveStateLocal:`, config.dve.stateCurrent)
         this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
         this.updatecontrollerState(this.getControllersByAction('ChangeDveMask'), { value })
         this.midi.updateControllersViaState(config.controllers)
@@ -431,14 +421,14 @@ class MIDI2ATEM extends EventEmitter {
 
   switchButtonLightOn(btns) {
     btns = asArray(btns)
-    console.log(`switchButtonLightOn:`, btns)
+    // console.log(`switchButtonLightOn:`, btns)
     btns = btns.map((btn) => { return { note: btn }})
     this.updateButtonState(btns, { state: 'noteon', value: 127 }, 'note')
   }
 
   switchButtonLightOff(btns) {
     btns = asArray(btns)
-    console.log(`switchButtonLightOff:`, btns)
+    // console.log(`switchButtonLightOff:`, btns)
     btns = btns.map((btn) => { return { note: btn }})
     this.updateButtonState(btns, { state: 'noteoff', value: 0 }, 'note')
   }
@@ -493,7 +483,7 @@ class MIDI2ATEM extends EventEmitter {
   }
 
   resetControllersToDefault(controllerStates) {
-    console.log(`resetControllersToDefault:`, controllerStates)
+    // console.log(`resetControllersToDefault:`, controllerStates)
     controllerStates = asArray(controllerStates)
     const { controllers } = config
     controllerStates = controllerStates.map((controllerState) => merge(controllerState, { state: 'cc', value: controllerState.defaultValue || 0 }))
