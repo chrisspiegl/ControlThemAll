@@ -190,7 +190,7 @@ export const config = {
       { note: 9, action: 'ChangeProgramSource', programInput: 'cam2' },
       { note: 10, action: 'ChangeProgramSource', programInput: 'cam3' },
       { note: 11, action: 'ChangeProgramSource', programInput: 'cam4' },
-      { note: 12, action: 'ChangeDveStyle', style: 'phone', programInput: 'cam4', fillSource: 'cam1', buttonsLightOn: [ 12, 36 ], buttonsLightOff: [ 13, 37 ] },
+      { note: 12, action: 'ChangeDveStyle', style: 'phone', programInput: 'cam1', fillSource: 'cam4', buttonsLightOn: [ 12, 36 ], buttonsLightOff: [ 13, 37 ] },
       { note: 13, action: 'ChangeDveStyle', style: 'monitor', programInput: 'cam1', fillSource: 'cam2', buttonsLightOn: [ 13, 37 ], buttonsLightOff: [ 12, 36 ] },
       { note: 14, action: 'AutoCutSwitch' },
       { note: 15, action: 'FadeToBlack' },
@@ -199,10 +199,10 @@ export const config = {
       { note: 17, action: 'ChangeProgramSource', programInput: 'cam2', withUpstreamKeyer: true },
       { note: 18, action: 'ChangeProgramSource', programInput: 'cam3', withUpstreamKeyer: true },
       { note: 19, action: 'ChangeProgramSource', programInput: 'cam4', withUpstreamKeyer: true },
-      { note: 20, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam1', when: 'auto' },
-      { note: 21, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam2', when: 'auto' },
-      { note: 22, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam3', when: 'auto' },
-      { note: 23, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam4', when: 'auto' },
+      { note: 20, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam1' },
+      { note: 21, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam2' },
+      { note: 22, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam3' },
+      { note: 23, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam4' },
     // LAYER B
       // DIAL BUTTONS
       { note: 24, action: 'ResetDveScale', buttonsLightOff: [ 12, 13 ] },
@@ -227,10 +227,10 @@ export const config = {
       { note: 41, action: 'ChangeProgramSource', programInput: 'cam3' },
       { note: 42, action: 'ChangeProgramSource', programInput: 'cam4' },
       { note: 43, action: 'ChangeProgramSource', programInput: 'cam2' },
-      { note: 44, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam1', when: 'auto' },
-      { note: 45, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam3', when: 'auto' },
-      { note: 46, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam4', when: 'auto' },
-      { note: 47, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam2', when: 'auto' },
+      { note: 44, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam1' },
+      { note: 45, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam3' },
+      { note: 46, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam4' },
+      { note: 47, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam2' },
   ],
 
   feedback: {
