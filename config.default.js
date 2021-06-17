@@ -161,6 +161,45 @@ export const config = {
     ],
   },
 
+  /**
+   * Available Actions:
+   * - Macro
+   * - Delay
+   * - ResetDveScale
+   * - ResetDvePosition
+   * - ResetDveMask
+   * - ChangeProgramSource
+   * - ChangeUpstreamKeyerFillSource
+   * - ChangeDveScale
+   * - ChangeDvePosition
+   * - ChangeDveMask
+   * - ChangeAudioGain
+   * - ResetAudioGain
+   * - ChangeDveStyle
+   * - AutoCutSwitch
+   * - FadeToBlack
+   * - ResetDveAll
+   * - SwitchProgramAndUpstreamKeyerFillSource
+   */
+
+  macros: [
+    {
+      name: 'TestMacro',
+      actions: [
+        { action: 'Delay', duration: 1000 },
+        { action: 'ResetDveScale', buttonsLightOff: [ 12, 13 ] },
+        { action: 'Delay', duration: 1000 },
+        { action: 'ResetDvePosition', buttonsLightOff: [ 12, 13 ] },
+        { action: 'Delay', duration: 1000 },
+        { action: 'ResetDveMask', buttonsLightOff: [ 12, 13 ] },
+        { action: 'Delay', duration: 1000 },
+        { action: 'ChangeProgramSource', programInput: 'cam1', withUpstreamKeyer: true },
+        { action: 'Delay', duration: 1000 },
+        { action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam1', when: 'instant' },
+      ],
+    },
+  ],
+
   controllers: [
     // LAYER A: DIAL CHANGES
     { note: 0, action: 'ChangeDveScale', defaultValue: 50, buttonsLightOff: [ 12, 13 ] },
@@ -189,60 +228,60 @@ export const config = {
   buttons: [
     // LAYER A
       // DIAL BUTTONS
-      { note: 0, action: 'ResetDveScale', buttonsLightOff: [ 12, 13 ] },
-      { note: 1, action: 'ResetDvePosition', buttonsLightOff: [ 12, 13 ] },
-      { note: 2, action: 'ResetDveMask', buttonsLightOff: [ 12, 13 ] },
-      { note: 3, action: '' },
-      { note: 4, action: '' },
-      { note: 5, action: 'ResetAudioGain', name: 'ChangeAudioGainMain', audioIndex: 1301, channels: ['-65280'], defaultValue: 115,  range: { min: -10000, max: 1000 } }, //  stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-      { note: 6, action: 'ResetAudioGain', name: 'ChangeAudioGainDisplay', audioIndex: 2, channels: ['-65280'], defaultValue: 105,  range: { min: -10000, max: 1000 } },
-      { note: 7, action: 'ResetAudioGain', name: 'ChangeAudioGainPhone', audioIndex: 4, channels: ['-65280'], defaultValue: 105,  range: { min: -10000, max: 1000 } },
+      { note: 0, noteOff: { action: 'ResetDveScale', buttonsLightOff: [ 12, 13 ] } },
+      { note: 1, noteOff: { action: 'ResetDvePosition', buttonsLightOff: [ 12, 13 ] } },
+      { note: 2, noteOff: { action: 'ResetDveMask', buttonsLightOff: [ 12, 13 ] } },
+      { note: 3, noteOff: { action: '' } },
+      { note: 4, noteOff: { action: '' } },
+      { note: 5, noteOff: { action: 'ResetAudioGain', name: 'ChangeAudioGainMain', audioIndex: 1301, channels: ['-65280'], defaultValue: 115 } }, //  stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+      { note: 6, noteOff: { action: 'ResetAudioGain', name: 'ChangeAudioGainDisplay', audioIndex: 2, channels: ['-65280'], defaultValue: 105 } },
+      { note: 7, noteOff: { action: 'ResetAudioGain', name: 'ChangeAudioGainPhone', audioIndex: 4, channels: ['-65280'], defaultValue: 105 } },
       // BUTTONS UPPER ROW
-      { note: 8, action: 'ChangeProgramSource', programInput: 'cam1', withUpstreamKeyer: true },
-      { note: 9, action: 'ChangeProgramSource', programInput: 'cam2' },
-      { note: 10, action: 'ChangeProgramSource', programInput: 'cam3' },
-      { note: 11, action: 'ChangeProgramSource', programInput: 'cam4' },
-      { note: 12, action: 'ChangeDveStyle', style: 'phone', programInput: 'cam1', fillSource: 'cam4', buttonsLightOn: [ 12, 36 ], buttonsLightOff: [ 13, 37 ] },
-      { note: 13, action: 'ChangeDveStyle', style: 'monitor', programInput: 'cam1', fillSource: 'cam2', buttonsLightOn: [ 13, 37 ], buttonsLightOff: [ 12, 36 ] },
-      { note: 14, action: 'AutoCutSwitch' },
-      { note: 15, action: 'FadeToBlack' },
+      { note: 8, noteOff: { action: 'ChangeProgramSource', programInput: 'cam1', withUpstreamKeyer: true } },
+      { note: 9, noteOff: { action: 'ChangeProgramSource', programInput: 'cam2' } },
+      { note: 10, noteOff: { action: 'ChangeProgramSource', programInput: 'cam3' } },
+      { note: 11, noteOff: { action: 'ChangeProgramSource', programInput: 'cam4' } },
+      { note: 12, noteOff: { action: 'ChangeDveStyle', style: 'phone', programInput: 'cam1', fillSource: 'cam4', buttonsLightOn: [ 12, 36 ], buttonsLightOff: [ 13, 37 ] } },
+      { note: 13, noteOff: { action: 'ChangeDveStyle', style: 'monitor', programInput: 'cam1', fillSource: 'cam2', buttonsLightOn: [ 13, 37 ], buttonsLightOff: [ 12, 36 ] } },
+      { note: 14, noteOff: { action: 'AutoCutSwitch' } },
+      { note: 15, noteOff: { action: 'FadeToBlack' } },
       // BUTTONS BOTTOM ROW
-      { note: 16, action: 'ChangeProgramSource', programInput: 'cam1' },
-      { note: 17, action: 'ChangeProgramSource', programInput: 'cam2', withUpstreamKeyer: true },
-      { note: 18, action: 'ChangeProgramSource', programInput: 'cam3', withUpstreamKeyer: true },
-      { note: 19, action: 'ChangeProgramSource', programInput: 'cam4', withUpstreamKeyer: true },
-      { note: 20, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam1' },
-      { note: 21, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam2' },
-      { note: 22, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam3' },
-      { note: 23, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam4' },
+      { note: 16, noteOff: { action: 'ChangeProgramSource', programInput: 'cam1' } },
+      { note: 17, noteOff: { action: 'ChangeProgramSource', programInput: 'cam2', withUpstreamKeyer: true } },
+      { note: 18, noteOff: { action: 'ChangeProgramSource', programInput: 'cam3', withUpstreamKeyer: true } },
+      { note: 19, noteOff: { action: 'ChangeProgramSource', programInput: 'cam4', withUpstreamKeyer: true } },
+      { note: 20, noteOff: { action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam1' } },
+      { note: 21, noteOff: { action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam2' } },
+      { note: 22, noteOff: { action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam3' } },
+      { note: 23, noteOff: { action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam4' } },
     // LAYER B
       // DIAL BUTTONS
-      { note: 24, action: 'ResetDveScale', buttonsLightOff: [ 12, 13 ] },
-      { note: 25, action: 'ResetDvePosition', buttonsLightOff: [ 12, 13 ] },
-      { note: 26, action: 'ResetDveMask', buttonsLightOff: [ 12, 13 ] },
-      { note: 27, action: '' },
-      { note: 28, action: '' },
-      { note: 29, action: 'ResetAudioGain', name: 'ChangeAudioGainMain', audioIndex: 1301, channels: ['-65280'], defaultValue: 115,  range: { min: -10000, max: 1000 } }, //  stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-      { note: 30, action: 'ResetAudioGain', name: 'ChangeAudioGainDisplay', audioIndex: 2, channels: ['-65280'], defaultValue: 105,  range: { min: -10000, max: 1000 } },
-      { note: 31, action: 'ResetAudioGain', name: 'ChangeAudioGainPhone', audioIndex: 4, channels: ['-65280'], defaultValue: 105,  range: { min: -10000, max: 1000 } },
+      { note: 24, noteOff: { action: 'ResetDveScale', buttonsLightOff: [ 12, 13 ] } },
+      { note: 25, noteOff: { action: 'ResetDvePosition', buttonsLightOff: [ 12, 13 ] } },
+      { note: 26, noteOff: { action: 'ResetDveMask', buttonsLightOff: [ 12, 13 ] } },
+      { note: 27, noteOff: { action: '' } },
+      { note: 28, noteOff: { action: '' } },
+      { note: 29, noteOff: { action: 'ResetAudioGain', name: 'ChangeAudioGainMain', audioIndex: 1301, channels: ['-65280'], defaultValue: 115 } }, //  stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+      { note: 30, noteOff: { action: 'ResetAudioGain', name: 'ChangeAudioGainDisplay', audioIndex: 2, channels: ['-65280'], defaultValue: 105 } },
+      { note: 31, noteOff: { action: 'ResetAudioGain', name: 'ChangeAudioGainPhone', audioIndex: 4, channels: ['-65280'], defaultValue: 105 } },
       // BUTTONS TOP ROW
-      { note: 32, action: 'ChangeProgramSource', programInput: 'cam1', withUpstreamKeyer: true },
-      { note: 33, action: 'ChangeProgramSource', programInput: 'cam3', withUpstreamKeyer: true },
-      { note: 34, action: 'ChangeProgramSource', programInput: 'cam4', withUpstreamKeyer: true },
-      { note: 35, action: 'ChangeProgramSource', programInput: 'cam2', withUpstreamKeyer: true },
-      { note: 36, action: 'ChangeDveStyle', style: 'phone', programInput: 'cam4', fillSource: 'cam1', buttonsLightOn: [ 12, 36 ], buttonsLightOff: [ 13, 37 ] },
-      { note: 37, action: 'ChangeDveStyle', style: 'monitor', programInput: 'cam1', fillSource: 'cam2', buttonsLightOn: [ 13, 37 ], buttonsLightOff: [ 12, 36 ] },
-      { note: 38, action: 'SwitchProgramAndUpstreamKeyerFillSource' },
-      { note: 39, action: 'FadeToBlack' },
+      { note: 32, noteOff: { action: 'ChangeProgramSource', programInput: 'cam1', withUpstreamKeyer: true } },
+      { note: 33, noteOff: { action: 'ChangeProgramSource', programInput: 'cam3', withUpstreamKeyer: true } },
+      { note: 34, noteOff: { action: 'ChangeProgramSource', programInput: 'cam4', withUpstreamKeyer: true } },
+      { note: 35, noteOff: { action: 'ChangeProgramSource', programInput: 'cam2', withUpstreamKeyer: true } },
+      { note: 36, noteOff: { action: 'ChangeDveStyle', style: 'phone', programInput: 'cam4', fillSource: 'cam1', buttonsLightOn: [ 12, 36 ], buttonsLightOff: [ 13, 37 ] } },
+      { note: 37, noteOff: { action: 'ChangeDveStyle', style: 'monitor', programInput: 'cam1', fillSource: 'cam2', buttonsLightOn: [ 13, 37 ], buttonsLightOff: [ 12, 36 ] } },
+      { note: 38, noteOff: { action: 'SwitchProgramAndUpstreamKeyerFillSource' } },
+      { note: 39, noteOff: { action: 'FadeToBlack' } },
       // BUTTONS BOTTOM ROW
-      { note: 40, action: 'ChangeProgramSource', programInput: 'cam1' },
-      { note: 41, action: 'ChangeProgramSource', programInput: 'cam3' },
-      { note: 42, action: 'ChangeProgramSource', programInput: 'cam4' },
-      { note: 43, action: 'ChangeProgramSource', programInput: 'cam2' },
-      { note: 44, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam1' },
-      { note: 45, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam3' },
-      { note: 46, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam4' },
-      { note: 47, action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam2' },
+      { note: 40, noteOff: { action: 'ChangeProgramSource', programInput: 'cam1' } },
+      { note: 41, noteOff: { action: 'ChangeProgramSource', programInput: 'cam3' } },
+      { note: 42, noteOff: { action: 'ChangeProgramSource', programInput: 'cam4' } },
+      { note: 43, noteOff: { action: 'ChangeProgramSource', programInput: 'cam2' } },
+      { note: 44, noteOff: { action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam1' } },
+      { note: 45, noteOff: { action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam3' } },
+      { note: 46, noteOff: { action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam4' } },
+      { note: 47, noteOff: { action: 'ChangeUpstreamKeyerFillSource', fillSource: 'cam2' } },
   ],
 
   feedback: {
