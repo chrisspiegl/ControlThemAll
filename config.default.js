@@ -163,7 +163,6 @@ export const config = {
 
   /**
    * Available Actions:
-   * - Macro
    * - Delay
    * - ResetDveScale
    * - ResetDvePosition
@@ -173,6 +172,7 @@ export const config = {
    * - ChangeDveScale
    * - ChangeDvePosition
    * - ChangeDveMask
+   * - RunMacro
    * - ChangeAudioGain
    * - ResetAudioGain
    * - ChangeDveStyle

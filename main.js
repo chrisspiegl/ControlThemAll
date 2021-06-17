@@ -222,7 +222,7 @@ class MIDI2ATEM extends EventEmitter {
 
   getButtonAction(name) {
     const buttonActions = {
-      Macro: async (options, value) => {
+      RunMacro: async (options, value) => {
         // console.log(`options:`, options)
         const { name } = options
         const macroConfig = _.find(config.macros, { name })
