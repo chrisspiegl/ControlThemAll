@@ -34,6 +34,11 @@ export const config = {
   dve: {
     fillSource: 1,
     stateDefault: {
+      /**
+       * The styling parameters available can be seen at: https://nrkno.github.io/tv-automation-atem-connection/interfaces/upstreamkeyerdvesettings.html
+       */
+      rate: 10, // flying key speed
+
       sizeX: 500,
       sizeY: 500,
       positionX: 12000,
@@ -47,10 +52,15 @@ export const config = {
 
       rotation: 0,
 
+      borderEnabled: true,
+
       borderOuterWidth: 5,
       borderInnerWidth: 10,
+
       borderOuterSoftness: 0,
       borderInnerSoftness: 0,
+
+      borderBevel: 0,
       borderBevelSoftness: 0,
       borderBevelPosition: 0,
 
@@ -58,6 +68,8 @@ export const config = {
       borderHue: 146,
       borderSaturation: 619,
       borderLuma: 494,
+
+      shadowEnabled: false,
 
       lightSourceDirection: 0,
       lightSourceAltitude: 0,
@@ -70,7 +82,7 @@ export const config = {
         positionX: 9700,
         positionY: -5100,
 
-        maskEnabled: true,
+        maskEnabled: false,
         maskTop: 0,
         maskBottom: 0,
         maskRight: 0,
