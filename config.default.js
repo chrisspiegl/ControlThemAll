@@ -173,6 +173,7 @@ export const config = {
    * - ChangeDvePosition
    * - ChangeDveMask
    * - RunMacro
+   * - SendHttpRequest
    * - ChangeAudioGain
    * - ResetAudioGain
    * - ChangeDveStyle

@@ -240,6 +240,25 @@ class MIDI2ATEM extends EventEmitter {
         return new Promise(resolve => setTimeout(resolve, options.duration))
       },
 
+      SendHttpRequest: async (options, value) => {
+        console.log(`options:`, options)
+        let { url, type, body, headers } = options
+        if (!url) {
+          console.log('url must be present')
+          return
+        }
+        type = (!_.isEmpty(type)) ? type.toLowerCase() : 'get'
+        type = ['get', 'post', 'path', 'delete', 'put', 'head'].includes(type) ? type : 'get'
+        body = (type !== 'get' && !_.isEmpty(body)) ? body : undefined
+        headers = (!_.isEmpty(headers)) ? headers : { 'Content-Type': 'application/json' }
+        try {
+          const response = await got[type](options.url, { body, headers })
+          console.log('HTTP Request Response: ', response.body)
+        } catch (error) {
+          console.log(`HTTP Request Error:`, error)
+        }
+      },
+
       ResetDveScale: (options, value) => {
         const { defaultValue } = options
         value = value || defaultValue || 0
