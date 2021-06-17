@@ -11,7 +11,7 @@ import { config } from './config.js'
 import { asArray, map } from './utils.js'
 
 
-const MIDI_RESEND_INTERVAL = 1000 // ms
+const MIDI_RESEND_INTERVAL = 2000 // ms
 
 class MIDI2ATEM extends EventEmitter {
   constructor() {

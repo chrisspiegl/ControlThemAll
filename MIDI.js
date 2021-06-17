@@ -6,7 +6,7 @@ import { EventEmitter } from 'inf-ee'
 import { config } from './config.js'
 
 const CONNECTION_TIMEOUT = 5000 // ms
-const CONNECTION_RETRY_INTERVAL = 1000 // ms
+const CONNECTION_RETRY_INTERVAL = 4000 // ms
 const THROTTLE_BUTTON_UPDATE = 250 // ms
 const THROTTLE_CONTROLLER_UPDATE = 250 // ms
 
