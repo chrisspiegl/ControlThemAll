@@ -220,6 +220,24 @@ class MIDI2ATEM extends EventEmitter {
 
   getButtonAction(name) {
     const buttonActions = {
+      Macro: async (options, value) => {
+        // console.log(`options:`, options)
+        const { name } = options
+        const macroConfig = _.find(config.macros, { name })
+        const { actions } = macroConfig
+        for (const actionConfig of actions) {
+          if (_.isEmpty(actionConfig) || _.isEmpty(actionConfig.action)) return
+          const buttonActionFunction = this.getButtonAction(actionConfig.action)
+          // console.log(`before ${actionConfig.action}`)
+          if (buttonActionFunction) await buttonActionFunction(actionConfig, value)
+          // console.log(`after ${actionConfig.action}`)
+        }
+      },
+
+      Delay: (options, value) => {
+        return new Promise(resolve => setTimeout(resolve, options.duration))
+      },
+
       ResetDveScale: (options, value) => {
         const { defaultValue } = options
         value = value || defaultValue || 0
