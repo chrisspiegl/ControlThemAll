@@ -2,12 +2,12 @@ import { ATEM } from './ATEM.js'
 import { MIDI } from './MIDI.js'
 import { config } from './config.js'
 
+import { asArray, map } from './utils.js'
+
 import { Enums } from 'atem-connection'
 import merge from 'deepmerge'
 import _ from 'lodash'
 
-const asArray = (x) => Array.isArray(x) ? x : [x]
-const map = (value, x1, y1, x2, y2) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
 
 class MIDI2ATEM {
   constructor() {
