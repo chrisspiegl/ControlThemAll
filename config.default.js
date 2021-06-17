@@ -168,18 +168,18 @@ export const config = {
     { note: 2, action: 'ChangeDveMask', defaultValue: 64, buttonsLightOff: [ 12, 13 ] },
     { note: 3, action: '' },
     { note: 4, action: '' },
-    { note: 5, action: 'ChangeAudioGain', name: 'ChangeAudioGainMain', audioIndex: 1301, channels: ['-65280'], defaultValue: 115,  range: { min: -10000, max: 1000 } }, //  stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-    { note: 6, action: 'ChangeAudioGain', name: 'ChangeAudioGainDisplay', audioIndex: 2, channels: ['-65280'], defaultValue: 105,  range: { min: -10000, max: 1000 } },
-    { note: 7, action: 'ChangeAudioGain', name: 'ChangeAudioGainPhone', audioIndex: 4, channels: ['-65280'], defaultValue: 105,  range: { min: -10000, max: 1000 } },
+    { note: 5, action: 'ChangeAudioGain', name: 'ChangeAudioGainMain', audioIndex: 1301, channels: ['-65280'], defaultValue: 115 }, //  stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+    { note: 6, action: 'ChangeAudioGain', name: 'ChangeAudioGainDisplay', audioIndex: 2, channels: ['-65280'], defaultValue: 105 },
+    { note: 7, action: 'ChangeAudioGain', name: 'ChangeAudioGainPhone', audioIndex: 4, channels: ['-65280'], defaultValue: 105 },
     // LAYER B: DIAL CHANGES
     { note: 24, action: 'ChangeDveScale', defaultValue: 50, buttonsLightOff: [ 12, 13 ] },
     { note: 25, action: 'ChangeDvePosition', defaultValue: 65, buttonsLightOff: [ 12, 13 ] },
     { note: 26, action: 'ChangeDveMask', defaultValue: 64, buttonsLightOff: [ 12, 13 ] },
     { note: 27, action: '' },
     { note: 28, action: '' },
-    { note: 29, action: 'ChangeAudioGain', name: 'ChangeAudioGainMain', audioIndex: 1301, channels: ['-65280'], defaultValue: 115,  range: { min: -10000, max: 1000 } }, //  stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-    { note: 30, action: 'ChangeAudioGain', name: 'ChangeAudioGainDisplay', audioIndex: 2, channels: ['-65280'], defaultValue: 105,  range: { min: -10000, max: 1000 } },
-    { note: 31, action: 'ChangeAudioGain', name: 'ChangeAudioGainPhone', audioIndex: 4, channels: ['-65280'], defaultValue: 105,  range: { min: -10000, max: 1000 } },
+    { note: 29, action: 'ChangeAudioGain', name: 'ChangeAudioGainMain', audioIndex: 1301, channels: ['-65280'], defaultValue: 115 }, //  stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+    { note: 30, action: 'ChangeAudioGain', name: 'ChangeAudioGainDisplay', audioIndex: 2, channels: ['-65280'], defaultValue: 105 },
+    { note: 31, action: 'ChangeAudioGain', name: 'ChangeAudioGainPhone', audioIndex: 4, channels: ['-65280'], defaultValue: 105 },
     // LAYER A: FAIDER CHANGE
     { note: 126, action: '' },
     // LAYER B: FAIDER CHANGE
