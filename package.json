@@ -12,10 +12,13 @@
   "dependencies": {
     "atem-connection": "3.0.0-nightly-latest-20210530-132658-16c3cdd.0",
     "atem-state": "^0.10.1",
+    "debug": "^4.3.1",
     "deep-object-diff": "^1.1.0",
     "deepmerge": "^4.2.2",
     "easymidi": "^2.0.4",
-    "lodash": "^4.17.21"
+    "inf-ee": "^1.0.4",
+    "lodash": "^4.17.21",
+    "throttle-debounce": "^3.0.1"
   },
   "author": {
     "name": "Chris Spiegl",
