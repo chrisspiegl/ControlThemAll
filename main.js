@@ -387,11 +387,10 @@ class MIDI2ATEM extends EventEmitter {
           ...config.dve.positions[pos]
         }
         config.dve.stateMain = { ...config.dve.stateCurrent }
-        this.atem.setUpstreamKeyerDVESettings({ rate: 10 })
+        this.atem.setUpstreamKeyerDVESettings({ rate: config.dve.stateMain.rate || 10 })
         this.atem.setUpstreamKeyerFlyKeyKeyframe(me, usk, Enums.FlyKeyKeyFrame.A, {
           ...config.dve.stateMain,
           keyFrameId: Enums.FlyKeyKeyFrame.A,
-          rate: 100,
         })
         this.atem.runUpstreamKeyerFlyKeyTo(me, usk, Enums.FlyKeyKeyFrame.A)
         // this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
