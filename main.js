@@ -60,6 +60,13 @@ class MIDI2ATEM extends EventEmitter {
 
   midiOnNoteOn(msg) {
     console.log(`NOTE ON:`, msg)
+    const { note, velocity: value, channel } = msg
+    const buttonConfig = _.find(config.buttons, { note })
+    console.log(`buttonConfig:`, buttonConfig)
+    const actionConfig = buttonConfig.noteOn
+    if (_.isEmpty(actionConfig) || _.isEmpty(actionConfig.action)) return
+    const buttonActionFunction = this.getButtonAction(actionConfig.action)
+    if (buttonActionFunction) buttonActionFunction(actionConfig, value)
   }
 
   midiOnNoteOff(msg) {
@@ -67,8 +74,10 @@ class MIDI2ATEM extends EventEmitter {
     const { note, velocity: value, channel } = msg
     const buttonConfig = _.find(config.buttons, { note })
     console.log(`buttonConfig:`, buttonConfig)
-    const buttonAction = this.getButtonAction(buttonConfig.action)
-    if (buttonAction) buttonAction(buttonConfig, value)
+    const actionConfig = (buttonConfig.noteOff) ? buttonConfig.noteOff : buttonConfig
+    if (_.isEmpty(actionConfig) || _.isEmpty(actionConfig.action)) return
+    const buttonActionFunction = this.getButtonAction(actionConfig.action)
+    if (buttonActionFunction) buttonActionFunction(actionConfig, value)
   }
 
   midiOnControllerChange(msg) {
