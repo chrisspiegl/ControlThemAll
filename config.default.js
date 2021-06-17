@@ -162,6 +162,8 @@ export const config = {
   },
 
   /**
+   * Functionalities which can run upon button press:
+   *
    * Generic Actions:
    * - Delay
    * - RunMacro
@@ -208,6 +210,16 @@ export const config = {
       ],
     },
   ],
+
+  /**
+   * Funcionalities which can run upon controller twist / fader fade:
+   *
+   * ATEM Actions:
+   * - ChangeAudioGain
+   * - ChangeDveMask
+   * - ChangeDvePosition
+   * - ChangeDveScale
+   */
 
   controllers: [
     // LAYER A: DIAL CHANGES
@@ -256,6 +268,8 @@ export const config = {
       { note: 15, noteOff: { action: 'FadeToBlack' } },
       // BUTTONS BOTTOM ROW
       { note: 16, noteOff: { action: 'ChangeProgramSource', programInput: 'cam1' } },
+      // { note: 16, noteOff: { action: 'SendHttpRequest', type: 'GET', url: 'http://127.0.0.1:8888/press/bank/1/24', body: undefined } },
+      // { note: 16, noteOff: { action: 'RunMacro', name: 'TestMacro' } },
       { note: 17, noteOff: { action: 'ChangeProgramSource', programInput: 'cam2', withUpstreamKeyer: true } },
       { note: 18, noteOff: { action: 'ChangeProgramSource', programInput: 'cam3', withUpstreamKeyer: true } },
       { note: 19, noteOff: { action: 'ChangeProgramSource', programInput: 'cam4', withUpstreamKeyer: true } },
