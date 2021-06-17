@@ -16,6 +16,7 @@
     "deep-object-diff": "^1.1.0",
     "deepmerge": "^4.2.2",
     "easymidi": "^2.0.4",
+    "got": "^11.8.2",
     "inf-ee": "^1.0.4",
     "lodash": "^4.17.21",
     "throttle-debounce": "^3.0.1"
