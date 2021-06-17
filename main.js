@@ -274,17 +274,19 @@ class MIDI2ATEM extends EventEmitter {
         this.midi.updateButtonsViaState(config.buttons)
       },
 
-      ResetAudioGain: (options, value) => this.getActionChain('changeAudioGain')(options),
+      ResetDveAll: () => {
+        config.dve.stateCurrent = {
+          ...config.dve.stateDefault,
+        }
+        config.dve.stateMain = { ...config.dve.stateCurrent }
+        this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
+        this.resetControllersToDefault(this.getControllersByAction('ChangeDveScale'))
+        this.resetControllersToDefault(this.getControllersByAction('ChangeDvePosition'))
+        this.resetControllersToDefault(this.getControllersByAction('ChangeDveMask'))
+        this.midi.updateControllersViaState(config.controllers)
+      },
 
-      // ResetDveAll: () => {
-      //   config.dve.stateCurrent = {
-      //     ...config.dve.stateDefault,
-      //   }
-      //   config.dve.stateMain = { ...config.dve.stateCurrent }
-      //   this.atem.setUpstreamKeyerDVESettings(config.dve.stateCurrent)
-      //   this.resetControllersToDefault(this.getControllersByAction('ChangeDveMask'))
-      //   this.midi.updateControllersViaState(config.controllers)
-      // },
+      ResetAudioGain: (options, value) => this.getActionChain('changeAudioGain')(options),
 
       ChangeDveStyle: (options, value) => {
         config.dve.stateCurrent = {
