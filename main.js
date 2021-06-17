@@ -1,13 +1,15 @@
+import got from 'got'
+import { Enums } from 'atem-connection'
+import { EventEmitter } from 'inf-ee'
+import merge from 'deepmerge'
+import _ from 'lodash'
+
 import { ATEM } from './ATEM.js'
 import { MIDI } from './MIDI.js'
 import { config } from './config.js'
 
 import { asArray, map } from './utils.js'
 
-import { Enums } from 'atem-connection'
-import { EventEmitter } from 'inf-ee'
-import merge from 'deepmerge'
-import _ from 'lodash'
 
 const MIDI_RESEND_INTERVAL = 1000 // ms
 
