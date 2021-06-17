@@ -162,24 +162,26 @@ export const config = {
   },
 
   /**
-   * Available Actions:
+   * Generic Actions:
    * - Delay
-   * - ResetDveScale
-   * - ResetDvePosition
-   * - ResetDveMask
-   * - ChangeProgramSource
-   * - ChangeUpstreamKeyerFillSource
-   * - ChangeDveScale
-   * - ChangeDvePosition
-   * - ChangeDveMask
    * - RunMacro
    * - SendHttpRequest
-   * - ChangeAudioGain
-   * - ResetAudioGain
-   * - ChangeDveStyle
+   *
+   * ATEM Actions:
    * - AutoCutSwitch
+   * - ChangeAudioGain
+   * - ChangeDveMask
+   * - ChangeDvePosition
+   * - ChangeDveScale
+   * - ChangeDveStyle
+   * - ChangeProgramSource
+   * - ChangeUpstreamKeyerFillSource
    * - FadeToBlack
+   * - ResetAudioGain
    * - ResetDveAll
+   * - ResetDveMask
+   * - ResetDvePosition
+   * - ResetDveScale
    * - SwitchProgramAndUpstreamKeyerFillSource
    */
 
