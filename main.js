@@ -341,7 +341,7 @@ class MIDI2ATEM extends EventEmitter {
       },
 
       ChangeUpstreamKeyerFillSource: (options, value) => {
-        this.getActionChain('camInDve')(config.inputMapping[options.fillSource])
+        this.getActionChain('camInDve')(config.inputMapping[options.fillSource], options.when)
       },
 
       ChangeProgramAndDveFillSource: (options, value) => {
