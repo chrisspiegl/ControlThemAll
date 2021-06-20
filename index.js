@@ -16,10 +16,10 @@ export class ControlThemAll {
     console.log(`Constructing ControlThemAll Backend`)
     this._resendMidiTimer = undefined
 
-    this.midi = undefined
-    this.atem = undefined
-    this.webserver = undefined
-    this.config = undefined
+    this.controllerMidi = undefined
+    this.controllerAtem = undefined
+    this.controllerWebServer = undefined
+    this.controllerConfig = undefined
 
     this.setup()
   }
@@ -56,18 +56,18 @@ export class ControlThemAll {
     }
 
 
+    this.controllerMidi = new ControllerMidi({
+      config: await this.controllerConfig.getConfig()
+    })
+
+    this.controllerMidi.on('noteOn', this.midiOnNoteOn.bind(this))
+    this.controllerMidi.on('noteOff', this.midiOnNoteOff.bind(this))
+    this.controllerMidi.on('controllerChange', this.midiOnControllerChange.bind(this))
+    this.controllerMidi.on('connect', this.midiOnConnect.bind(this))
+    this.controllerMidi.on('disconnect', this.midiOnDisconnect.bind(this))
+    this.controllerMidi.on('log', (msg) => console.log(msg))
+
     if (this.config.midi.enabled) {
-      this.midi = this.controllerMidi = new ControllerMidi({
-        config: await this.controllerConfig.getConfig()
-      })
-
-      this.controllerMidi.on('noteOn', this.midiOnNoteOn.bind(this))
-      this.controllerMidi.on('noteOff', this.midiOnNoteOff.bind(this))
-      this.controllerMidi.on('controllerChange', this.midiOnControllerChange.bind(this))
-      this.controllerMidi.on('connect', this.midiOnConnect.bind(this))
-      this.controllerMidi.on('disconnect', this.midiOnDisconnect.bind(this))
-      this.controllerMidi.on('log', (msg) => console.log(msg))
-
       this.controllerMidi.connect({
         inputDeviceName: this.config.midi.inputDeviceName || this.config.midi.deviceName,
         outputDeviceName: this.config.midi.outputDeviceName || this.config.midi.deviceName,
@@ -75,14 +75,14 @@ export class ControlThemAll {
       })
     }
 
+    this.controllerAtem = new ControllerAtem()
+
+    this.controllerAtem.on('connected', this.atemOnConnected.bind(this))
+    this.controllerAtem.on('disconnect', this.atemOnDisconnect.bind(this))
+    this.controllerAtem.on('stateChanged', this.atemOnStateChanged.bind(this))
+    this.controllerAtem.on('log', (msg) => console.log(msg))
+
     if (this.config.atem.enabled) {
-      this.atem = this.controllerAtem = new ControllerAtem()
-
-      this.controllerAtem.on('connected', this.atemOnConnected.bind(this))
-      this.controllerAtem.on('disconnect', this.atemOnDisconnect.bind(this))
-      this.controllerAtem.on('stateChanged', this.atemOnStateChanged.bind(this))
-      this.controllerAtem.on('log', (msg) => console.log(msg))
-
       this.controllerAtem.connect({
         address: this.config.atem.address,
       })
@@ -139,8 +139,8 @@ export class ControlThemAll {
         // Make sure that the buttons are updated in regular intervals.
         // This is necessary becuase layers on the Behringer X-Touch Mini do not update in the background when they are not active.
         // Simply sending the update every 1000ms or so will update at most 1 second after changing to a different layer.
-        this.midi.updateButtonsViaState(this.config.buttons)
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
       }, MIDI_RESEND_INTERVAL)
     }
   }
@@ -154,7 +154,7 @@ export class ControlThemAll {
 
   atemOnConnected(params) {
     console.log(`atem : connected`, params)
-    this.runStateUpate(this.atem.getState(), 'initial')
+    this.runStateUpate(this.controllerAtem.getState(), 'initial')
   }
 
   atemOnDisconnect(params) {
@@ -169,76 +169,76 @@ export class ControlThemAll {
     const actionChains = {
       camWithDve: (mainCamId, dveCamId = undefined) => {
         this.config.dve.fillSource = dveCamId || this.config.dve.fillSource
-        if (this.atem.getUpstreamKeyerType() !== Enums.MixEffectKeyType.DVE) {
-          this.atem.setUpstreamKeyerType({ flyEnabled: true, mixEffectKeyType: Enums.MixEffectKeyType.DVE })
+        if (this.controllerAtem.getUpstreamKeyerType() !== Enums.MixEffectKeyType.DVE) {
+          this.controllerAtem.setUpstreamKeyerType({ flyEnabled: true, mixEffectKeyType: Enums.MixEffectKeyType.DVE })
         }
-        this.atem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
+        this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
 
         if (this.config.transition.type === 'cut' || this.config.transition.dipWhenProgramAndDveChange === false) {
-          this.atem.changePreviewInput(mainCamId)
-          if (this.atem.isUpstreamKeyerActive()) {
-            this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+          this.controllerAtem.changePreviewInput(mainCamId)
+          if (this.controllerAtem.isUpstreamKeyerActive()) {
+            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
           } else {
-            this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
           }
-          this.atem.setUpstreamKeyerFillSource(this.config.dve.fillSource)
-          if (this.config.transition.type === 'auto') { this.atem.autoTransition() } else { this.atem.cut() }
-        } else if (this.atem.getUpstreamKeyerFillSource() !== this.config.dve.fillSource && this.atem.isUpstreamKeyerActive()) {
-          this.atem.changePreviewInput(this.config.inputMapping.black)
-          this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
-          if (this.config.transition.type === 'auto') { this.atem.autoTransition() } else { this.atem.cut() }
+          this.controllerAtem.setUpstreamKeyerFillSource(this.config.dve.fillSource)
+          if (this.config.transition.type === 'auto') { this.controllerAtem.autoTransition() } else { this.controllerAtem.cut() }
+        } else if (this.controllerAtem.getUpstreamKeyerFillSource() !== this.config.dve.fillSource && this.controllerAtem.isUpstreamKeyerActive()) {
+          this.controllerAtem.changePreviewInput(this.config.inputMapping.black)
+          this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+          if (this.config.transition.type === 'auto') { this.controllerAtem.autoTransition() } else { this.controllerAtem.cut() }
           setTimeout(() => {
-            this.atem.setUpstreamKeyerFillSource(this.config.dve.fillSource)
-            this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
-            this.atem.changePreviewInput(mainCamId)
-            if (this.config.transition.type === 'auto') { this.atem.autoTransition() } else { this.atem.cut() }
-          }, this.atem.getTransitionDuration() * this.config.msPerFrame)
+            this.controllerAtem.setUpstreamKeyerFillSource(this.config.dve.fillSource)
+            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+            this.controllerAtem.changePreviewInput(mainCamId)
+            if (this.config.transition.type === 'auto') { this.controllerAtem.autoTransition() } else { this.controllerAtem.cut() }
+          }, this.controllerAtem.getTransitionDuration() * this.config.msPerFrame)
         } else {
-          this.atem.changePreviewInput(mainCamId)
-          if (this.atem.isUpstreamKeyerActive()) {
-            this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
-            this.atem.autoTransition()
+          this.controllerAtem.changePreviewInput(mainCamId)
+          if (this.controllerAtem.isUpstreamKeyerActive()) {
+            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+            this.controllerAtem.autoTransition()
           } else {
-            this.atem.setUpstreamKeyerFillSource(this.config.dve.fillSource)
-            this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+            this.controllerAtem.setUpstreamKeyerFillSource(this.config.dve.fillSource)
+            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
             setTimeout(() => {
-              this.atem.autoTransition()
+              this.controllerAtem.autoTransition()
             }, this.config.msPerFrame * 2)
           }
         }
       },
 
       camSolo: (camId) => {
-        this.atem.changePreviewInput(camId)
-        if (this.atem.isUpstreamKeyerActive()) {
-          this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+        this.controllerAtem.changePreviewInput(camId)
+        if (this.controllerAtem.isUpstreamKeyerActive()) {
+          this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
         } else {
-          this.atem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+          this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
         }
-        if (this.config.transition.type === 'auto') { this.atem.autoTransition() } else { this.atem.cut() }
+        if (this.config.transition.type === 'auto') { this.controllerAtem.autoTransition() } else { this.controllerAtem.cut() }
       },
 
       camInDve: (camId, when = 'auto') => {
         // console.log(`setting dveFillSource:`, camId)
         // console.log(`setting dveFillSource:`, this.config.dve.fillSource)
-        // console.log(`current dveFillSource:`, this.atem.getUpstreamKeyerFillSource())
+        // console.log(`current dveFillSource:`, this.controllerAtem.getUpstreamKeyerFillSource())
         // console.log(`when:`, when)
-        if (when === 'auto' && this.config.dve.fillSource === camId && camId === this.atem.getUpstreamKeyerFillSource() || this.config.dve.fillSource === camId && camId === this.atem.getProgramInput()) {
+        if (when === 'auto' && this.config.dve.fillSource === camId && camId === this.controllerAtem.getUpstreamKeyerFillSource() || this.config.dve.fillSource === camId && camId === this.controllerAtem.getProgramInput()) {
           this.getActionChain('switchProgramAndDveSource')()
         } else if (when === 'instant') {
           this.config.dve.fillSource = camId
-          this.getActionChain('camWithDve')(this.atem.getProgramInput())
+          this.getActionChain('camWithDve')(this.controllerAtem.getProgramInput())
         } else if ((['auto'].includes(when)) && this.config.dve.fillSource === camId) {
-          this.getActionChain('camWithDve')(this.atem.getProgramInput())
+          this.getActionChain('camWithDve')(this.controllerAtem.getProgramInput())
         } else {
           this.config.dve.fillSource = camId
         }
         this.updateDveButtons()
-        this.midi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
       },
 
       switchProgramAndDveSource: () => {
-        const mainCamId = this.atem.getProgramInput()
+        const mainCamId = this.controllerAtem.getProgramInput()
         const dveCamId = this.config.dve.fillSource
         this.config.dve.fillSource = mainCamId
         this.getActionChain('camWithDve')(dveCamId)
@@ -252,10 +252,10 @@ export class ControlThemAll {
         const faderGain = Math.round(map(value, 0, 127, faderRange.min, faderRange.max) / 100) * 100
 
         for (const channel of asArray(channels)) {
-          this.atem.setFairlightAudioMixerSourceProps(audioIndex, channel, { faderGain })
+          this.controllerAtem.setFairlightAudioMixerSourceProps(audioIndex, channel, { faderGain })
         }
         this.updatecontrollerState(this.getControllersByName(options.name), { value }, 'name')
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
       },
     }
     return actionChains[name]
@@ -309,12 +309,12 @@ export class ControlThemAll {
           sizeX: this.config.dve.stateMain.sizeX,
           sizeY: this.config.dve.stateMain.sizeY,
         }
-        this.atem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
+        this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
         this.resetControllersToDefault(this.getControllersByAction('ChangeDveScale'))
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
         if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
         if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
-        this.midi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
       },
       ResetDvePosition: (options, value) => {
         const { defaultValue } = options
@@ -332,12 +332,12 @@ export class ControlThemAll {
           maskLeft: this.config.dve.stateDefault.maskLeft,
         }
         this.config.dve.stateMain = { ...this.config.dve.stateCurrent }
-        this.atem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
+        this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
         this.resetControllersToDefault(this.getControllersByAction('ChangeDvePosition'))
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
         if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
         if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
-        this.midi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
       },
       ResetDveMask: (options, value) => {
         const { defaultValue } = options
@@ -355,12 +355,12 @@ export class ControlThemAll {
           maskLeft: this.config.dve.stateMain.maskLeft,
         }
         this.config.dve.stateMain = { ...this.config.dve.stateCurrent }
-        this.atem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
+        this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
         this.resetControllersToDefault(this.getControllersByAction('ChangeDveMask'))
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
         if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
         if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
-        this.midi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
       },
 
       ResetDveAll: () => {
@@ -368,11 +368,11 @@ export class ControlThemAll {
           ...this.config.dve.stateDefault,
         }
         this.config.dve.stateMain = { ...this.config.dve.stateCurrent }
-        this.atem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
+        this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
         this.resetControllersToDefault(this.getControllersByAction('ChangeDveScale'))
         this.resetControllersToDefault(this.getControllersByAction('ChangeDvePosition'))
         this.resetControllersToDefault(this.getControllersByAction('ChangeDveMask'))
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
       },
 
       ResetAudioGain: (options, value) => this.getActionChain('changeAudioGain')(options),
@@ -383,14 +383,14 @@ export class ControlThemAll {
           ...this.config.dve.styles[options.style],
         }
         this.config.dve.stateMain = { ...this.config.dve.stateCurrent }
-        this.atem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
+        this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
         if (options.programInput || options.fillSource) {
           if (options.programInput && !options.fillSource) {
             this.getButtonAction('ChangeProgramSource')({ programInput: options.programInput })
           } else if (options.fillSource && !options.programInput) {
             this.getActionChain('camInDve')(this.config.inputMapping[options.fillSource], 'instant')
           } else {
-            if (this.atem.isUpstreamKeyerActive() && this.config.inputMapping[options.fillSource] === this.atem.getUpstreamKeyerFillSource() && this.config.inputMapping[options.programInput] === this.atem.getProgramInput()) {
+            if (this.controllerAtem.isUpstreamKeyerActive() && this.config.inputMapping[options.fillSource] === this.controllerAtem.getUpstreamKeyerFillSource() && this.config.inputMapping[options.programInput] === this.controllerAtem.getProgramInput()) {
               this.getActionChain('switchProgramAndDveSource')()
             } else {
               this.getActionChain('camWithDve')(this.config.inputMapping[options.programInput], this.config.inputMapping[options.fillSource])
@@ -399,17 +399,17 @@ export class ControlThemAll {
         }
         if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
         if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
-        this.midi.updateButtonsViaState(this.config.buttons)
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
       },
 
-      FadeToBlack: (options, value) => this.atem.fadeToBlack(),
+      FadeToBlack: (options, value) => this.controllerAtem.fadeToBlack(),
 
       AutoCutSwitch: (options, value) => {
         this.config.transition.type = this.config.transition.type === 'cut' ? 'auto' : 'cut'
         if (this.config.transition.type === 'auto') this.switchButtonLightOn(this.getButtonsByAction('AutoCutSwitch'))
         else this.switchButtonLightOff(this.getButtonsByAction('AutoCutSwitch'))
-        this.midi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
       },
 
       ChangeProgramSource: (options, value) => {
@@ -447,12 +447,12 @@ export class ControlThemAll {
           sizeX: value * 10,
           sizeY: value * 10,
         }
-        this.atem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
+        this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
         this.updatecontrollerState(this.getControllersByAction('ChangeDveScale'), { value })
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
         if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
         if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
-        this.midi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
       },
       ChangeDvePosition: (options, value) => {
         const { defaultValue } = options
@@ -467,18 +467,18 @@ export class ControlThemAll {
           ...this.config.dve.positions[pos]
         }
         this.config.dve.stateMain = { ...this.config.dve.stateCurrent }
-        this.atem.setUpstreamKeyerDVESettings({ rate: this.config.dve.stateMain.rate || 10 })
-        this.atem.setUpstreamKeyerFlyKeyKeyframe(me, usk, Enums.FlyKeyKeyFrame.A, {
+        this.controllerAtem.setUpstreamKeyerDVESettings({ rate: this.config.dve.stateMain.rate || 10 })
+        this.controllerAtem.setUpstreamKeyerFlyKeyKeyframe(me, usk, Enums.FlyKeyKeyFrame.A, {
           ...this.config.dve.stateMain,
           keyFrameId: Enums.FlyKeyKeyFrame.A,
         })
-        this.atem.runUpstreamKeyerFlyKeyTo(me, usk, Enums.FlyKeyKeyFrame.A)
-        // this.atem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
+        this.controllerAtem.runUpstreamKeyerFlyKeyTo(me, usk, Enums.FlyKeyKeyFrame.A)
+        // this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
         this.updatecontrollerState(this.getControllersByAction('ChangeDvePosition'), { value })
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
         if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
         if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
-        this.midi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
       },
       ChangeDveMask: (options, value) => {
         const { defaultValue } = options
@@ -496,12 +496,12 @@ export class ControlThemAll {
           maskRight: Math.round(9000 - valueWithDirection),
         }
         // console.log(`dveStateLocal:`, this.config.dve.stateCurrent)
-        this.atem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
+        this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
         this.updatecontrollerState(this.getControllersByAction('ChangeDveMask'), { value })
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
         if (options.buttonsLightOn) this.switchButtonLightOn(options.buttonsLightOn)
         if (options.buttonsLightOff) this.switchButtonLightOff(options.buttonsLightOff)
-        this.midi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
       },
 
       ChangeAudioGain: (options, value) => this.getActionChain('changeAudioGain')(options, value),
@@ -624,8 +624,8 @@ export class ControlThemAll {
       }
     }
 
-    this.midi.updateControllersViaState(this.config.controllers)
-    this.midi.updateButtonsViaState(this.config.buttons)
+    this.controllerMidi.updateControllersViaState(this.config.controllers)
+    this.controllerMidi.updateButtonsViaState(this.config.buttons)
   }
 
   async exitHandler(options, exitCode) {
@@ -635,16 +635,16 @@ export class ControlThemAll {
     if (options.cleanup) {
       console.log('Server closing: Doing the cleanup.')
 
-      if (this.config.midi.enabled) {
+      if (this.controllerMidi.isConnected()) {
         this.switchButtonLightOff(_.flatten(this.config.buttons.map((el) => [el.note])))
-        this.midi.updateButtonsViaState(this.config.buttons)
+        this.controllerMidi.updateButtonsViaState(this.config.buttons)
         this.updatecontrollerState(this.config.controllers.map((el) => merge(el, { state: 'cc', value: 0 })))
-        this.midi.updateControllersViaState(this.config.controllers)
+        this.controllerMidi.updateControllersViaState(this.config.controllers)
       }
 
-      if (this.config.webServer.enabled) await this.controllerWebServer.disconnect()
-      if (this.config.midi.enabled) await this.controllerMidi.disconnect()
-      if (this.config.atem.enabled) await this.controllerAtem.disconnect()
+      await this.controllerWebServer.disconnect()
+      await this.controllerMidi.disconnect()
+      await this.controllerAtem.disconnect()
 
       console.log('ControlThemAll closed, cleaned, and shutting down!')
     } else if (options.exit) {

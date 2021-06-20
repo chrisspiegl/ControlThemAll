@@ -15,6 +15,7 @@ specifiers:
   lodash: ^4.17.21
   nodemon: ^2.0.7
   throttle-debounce: ^3.0.1
+  yaml: ^1.10.2
 
 dependencies:
   atem-connection: 3.0.0-nightly-latest-20210530-132658-16c3cdd.0
@@ -29,6 +30,7 @@ dependencies:
   inf-ee: 1.0.4
   lodash: 4.17.21
   throttle-debounce: 3.0.1
+  yaml: 1.10.2
 
 devDependencies:
   caxa: 2.0.0
@@ -2464,6 +2466,11 @@ packages:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
     engines: {node: '>=0.4'}
     dev: true
+
+  /yaml/1.10.2:
+    resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
+    engines: {node: '>= 6'}
+    dev: false
 
   /yauzl/2.10.0:
     resolution: {integrity: sha1-x+sXyT4RLLEIb6bY5R+wZnt5pfk=}

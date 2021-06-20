@@ -5,11 +5,14 @@
   "version": "0.0.1",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "start": "pnpm run backend",
-    "backend": "nodemon ./index.js",
+    "dev": "pnpm run start:dev",
+    "start": "node .",
+    "start:dev": "nodemon ./index.js",
     "build": "pnpm run build:ncc && pnpm run build:caxa",
+    "build:app": "pnpm run build:ncc && pnpm run build:caxa:app",
     "build:ncc": "ncc build index.js -o dist/ncc",
-    "build:caxa": "caxa --input \"dist/ncc\" --output \"dist/bin/connectthemallbackend\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
+    "build:caxa": "caxa --input \"dist/ncc\" --output \"dist/bin/ControlThemAll\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
+    "build:caxa:app": "caxa --input \"dist/ncc\" --output \"dist/bin/ControlThemAll.app\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
   },
   "main": "index.js",
   "bin": "index.js",
@@ -25,11 +28,12 @@
     "got": "^11.8.2",
     "inf-ee": "^1.0.4",
     "lodash": "^4.17.21",
-    "throttle-debounce": "^3.0.1"
+    "throttle-debounce": "^3.0.1",
+    "yaml": "^1.10.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.7",
-    "caxa": "^2.0.0"
+    "caxa": "^2.0.0",
+    "nodemon": "^2.0.7"
   },
   "author": {
     "name": "Chris Spiegl",

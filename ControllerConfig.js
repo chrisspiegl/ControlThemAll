@@ -1,23 +1,32 @@
 import merge from 'deepmerge'
+import YAML from 'yaml'
+import fs from 'fs'
 
 export class ControllerConfig {
   constructor() {
+    this.config = undefined
     return this
   }
 
   async getConfig() {
-    const configDefault = await import('./config.default.js')
-    const configUser = await import('./config.user.js')
+    if (this.config) {
+      console.log(`Config already loaded and just returning!`)
+      return this.config
+    }
 
-    // console.log(`configDefault:`, configDefault)
-    // console.log(`configUser:`, configUser)
+    console.log(`Loading the configuration from the YAML files`)
 
-    const config = merge(configDefault.default, configUser.default)
+    const configDefault = YAML.parse(fs.readFileSync('./config.default.yaml', 'utf8'))
+    const configUser = YAML.parse(fs.readFileSync('./config.user.yaml', 'utf8'))
 
-    config.dve.stateMain = { ...config.dve.stateDefault }
-    config.dve.stateCurrent = { ...config.dve.stateDefault }
+    this.config = merge(configDefault, configUser)
 
-    return config
+    // console.log(`config:`, config)
+
+    this.config.dve.stateMain = { ...this.config.dve.stateDefault }
+    this.config.dve.stateCurrent = { ...this.config.dve.stateDefault }
+
+    return this.config
   }
 }
 

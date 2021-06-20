@@ -4,7 +4,7 @@ Control your [ATEM Mini](https://crsp.li/ATEMMiniLineup) (and more) with a Midi 
 
 ## Development Status
 
-This is pretty much a prototype. I am trying to make as many things as possible configurable through the `config.user.js` file. But at this time it is pretty much tailored to how I use the X-Touch Mini and my ATEM Mini.
+This is pretty much a prototype. I am trying to make as many things as possible configurable through the `config.user.yaml` file. But at this time it is pretty much tailored to how I use the X-Touch Mini and my ATEM Mini.
 
 ## Installation & Usage
 
@@ -29,7 +29,7 @@ npm install -g pnpm
 
 *A full walkthrough of the purpose and configuration file with explaination of most things is available on [YouTube at youtu.be/rnrHVzK5nG4](https://youtu.be/rnrHVzK5nG4).*
 
-Look into the `config.default.js` file and see if you find what you are looking for. You can then overwrite your choices in the `config.user.js` file so that you always have the `config.default.js` which will be updated with my default values as development continues.
+Look into the `config.default.yaml` file and see if you find what you are looking for. You can then overwrite your choices in the `config.user.yaml` file so that you always have the `config.default.yaml` which will be updated with my default values as development continues.
 
 Basically the config file houses most of the mapping information between buttons/controllers and the actions which should happen when a button/controller is pressed or a controller twisted.
 

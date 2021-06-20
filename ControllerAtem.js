@@ -48,7 +48,7 @@ export class ControllerAtem extends EventEmitter {
   }
 
   disconnect() {
-    this._atem.disconnect()
+    if (this._atem) this._atem.disconnect()
   }
 
   getState() {
