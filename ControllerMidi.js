@@ -225,7 +225,7 @@ export class ControllerMidi extends EventEmitter {
       this.send(btn.state || 'noteoff', {
         note: btn.note,
         velocity: btn.value || btn.defaultValue || 0,
-        channel: btn.channel || _self.config?.midi?.outputChannel || 10,
+        channel: btn.channel || this.config?.midi?.outputChannel || 10,
       })
     })
   }
@@ -251,7 +251,7 @@ export class ControllerMidi extends EventEmitter {
       this.sendControllerChange({
         controller: note,
         value: value,
-        channel: channel || _self.config?.midi?.outputChannel || 10,
+        channel: channel || this.config?.midi?.outputChannel || 10,
       })
     })
   }
