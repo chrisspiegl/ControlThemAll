@@ -2,7 +2,7 @@ webServer:
   enabled: true
 
 midi:
-  enabled: true
+  enabled: false
 
 atem:
   enabled: false

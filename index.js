@@ -11,6 +11,8 @@ import { ControllerConfig } from './ControllerConfig.js'
 
 import { asArray, map } from './utils.js'
 
+const MIDI_RESEND_INTERVAL = 1000 // ms
+
 export class ControlThemAll {
   constructor() {
     console.log(`Constructing ControlThemAll Backend`)
@@ -524,7 +526,15 @@ export class ControlThemAll {
   }
 
   getButtonsByAction(action) {
-    return _.map(_.filter(this.config.buttons, (el) => el.action === action), (el) => el.note)
+    return _.map(_.filter(this.config.buttons, (el) => el.action === action || el.noteOn?.action == action || el.noteOff?.action == action), (el) => el.note)
+  }
+
+  getButtonsByNoteOffAction(action) {
+    return _.map(_.filter(this.config.buttons, (el) => el.noteOff?.action == action), (el) => el.note)
+  }
+
+  getButtonsByNoteOnAction(action) {
+    return _.map(_.filter(this.config.buttons, (el) => el.noteOn?.action == action), (el) => el.note)
   }
 
   getControllersByAction(action) {
