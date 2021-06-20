@@ -1,13 +1,21 @@
 import { Enums } from 'atem-connection'
 
 export const config = {
+  webServer: {
+    enabled: true,
+    address: '',
+    port: 3333,
+  },
+
   midi: {
+    enabled: false,
     inputDeviceName: 'X-TOUCH MINI',
     outputDeviceName: 'X-TOUCH MINI',
     outputChannel: 10,
   },
 
   atem: {
+    enabled: false,
     address: '192.168.10.240',
   },
 

@@ -1,6 +1,6 @@
-# MIDI 2 ATEM
+# ControlThemAll
 
-Control your [ATEM Mini](https://crsp.li/ATEMMiniLineup) with a Midi Controll Surface such as the [Behringer X-Touch Mini](https://crsp.li/xtouchmini).
+Control your [ATEM Mini](https://crsp.li/ATEMMiniLineup) (and more) with a Midi Controll Surface such as the [Behringer X-Touch Mini](https://crsp.li/xtouchmini) (and probably more in the future).
 
 ## Development Status
 
@@ -12,12 +12,18 @@ This is pretty much a prototype. I am trying to make as many things as possible 
 
 Node.JS has to be installed. I am using [NVM](https://github.com/nvm-sh/nvm) to manage my node installation on macOS.
 
+I am using [pnpm](https://pnpm.io/) as my package manager of choice and so you may have to install that as well
+
+```bash
+npm install -g pnpm
+```
+
 ### Installation
 
 1. Download thie Repository ([ZIP](https://github.com/chrisspiegl/midi2atem/archive/refs/heads/main.zip))
 2. Unzip and open Terminal into that folder
-3. run `npm install`
-4. start the app with `npm start`
+3. run `pnpm install`
+4. start the app with `pnpm start`
 
 ### Usage
 

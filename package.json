@@ -1,25 +1,35 @@
 {
   "type": "module",
   "private": true,
-  "name": "midi2atem",
+  "name": "controlthemall",
   "version": "0.0.1",
-  "description": "Controlling your ATEM with a MIDI Controll Surface",
-  "main": "main.js",
   "scripts": {
-    "start": "node main.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "preinstall": "npx only-allow pnpm",
+    "start": "pnpm run backend",
+    "backend": "nodemon ./index.js",
+    "build": "pnpm run build:ncc && pnpm run build:caxa",
+    "build:ncc": "ncc build index.js -o dist/ncc",
+    "build:caxa": "caxa --input \"dist/ncc\" --output \"dist/bin/connectthemallbackend\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
   },
+  "main": "index.js",
+  "bin": "index.js",
   "dependencies": {
     "atem-connection": "3.0.0-nightly-latest-20210530-132658-16c3cdd.0",
     "atem-state": "^0.10.1",
     "debug": "^4.3.1",
     "deep-object-diff": "^1.1.0",
     "deepmerge": "^4.2.2",
-    "easymidi": "^2.0.4",
+    "detect-port": "^1.3.0",
+    "easymidi": "^2.0.5",
+    "express": "^4.17.1",
     "got": "^11.8.2",
     "inf-ee": "^1.0.4",
     "lodash": "^4.17.21",
     "throttle-debounce": "^3.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7",
+    "caxa": "^2.0.0"
   },
   "author": {
     "name": "Chris Spiegl",

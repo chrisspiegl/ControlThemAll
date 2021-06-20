@@ -3,8 +3,6 @@ import debug from 'debug'
 import { throttle } from 'throttle-debounce'
 import { EventEmitter } from 'inf-ee'
 
-import { config } from './config.js'
-
 const CONNECTION_TIMEOUT = 5000 // ms
 const CONNECTION_RETRY_INTERVAL = 4000 // ms
 const THROTTLE_BUTTON_UPDATE = 250 // ms
@@ -15,12 +13,14 @@ export const ConnectionState = {
   Connected: 0x01,
 }
 
-export class MIDI extends EventEmitter {
+export class ControllerMidi extends EventEmitter {
   constructor(options = {}) {
     super()
     console.log(`Constructing MIDI Controller`)
 
     this.componentName = 'MIDI Controller'
+
+    this.config = options.config || undefined
 
     this.sessionId = -1
 
@@ -70,6 +70,7 @@ export class MIDI extends EventEmitter {
     this._inputDeviceName = options.inputDeviceName || 'X-TOUCH MINI'
     this._outputDeviceName = options.outputDeviceName || 'X-TOUCH MINI'
     this._outputChannel = options.outputChannel || 10
+    this._config = options.config || {}
     this.startTimers()
     await this.restartConnection()
   }
@@ -224,7 +225,7 @@ export class MIDI extends EventEmitter {
       this.send(btn.state || 'noteoff', {
         note: btn.note,
         velocity: btn.value || btn.defaultValue || 0,
-        channel: btn.channel || config.midi.outputChannel,
+        channel: btn.channel || _self.config?.midi?.outputChannel || 10,
       })
     })
   }
@@ -250,7 +251,7 @@ export class MIDI extends EventEmitter {
       this.sendControllerChange({
         controller: note,
         value: value,
-        channel: channel || config.midi.outputChannel,
+        channel: channel || _self.config?.midi?.outputChannel || 10,
       })
     })
   }
@@ -270,9 +271,9 @@ export class MIDI extends EventEmitter {
   }
 
   log(level, ...args) {
-    if (this.onLog) this.onLog(this.componentName, level.toLowerCase(), args)
-    else debug(`sio:midi:${level.toLowerCase()}`, args)
+    this.emit('log', { component: this.componentName, level: level.toLowerCase(), message: args })
+    debug(`sio:midi:${level.toLowerCase()}`, args)
   }
 }
 
-export default MIDI
+export default ControllerMidi

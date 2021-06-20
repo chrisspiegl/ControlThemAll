@@ -1,11 +1,10 @@
 import debug from 'debug'
 import { Atem } from 'atem-connection'
 import { EventEmitter } from 'inf-ee'
-import { config } from './config.js'
 
 const ATEM_DEFAULT_ADDRESS = '192.168.10.240'
 
-export class ATEM extends EventEmitter {
+export class ControllerAtem extends EventEmitter {
   constructor(options = {}) {
     super()
     console.log(`Constructing ATEM Controller`)
@@ -124,11 +123,10 @@ export class ATEM extends EventEmitter {
     return this._atem.runUpstreamKeyerFlyKeyTo.apply(this._atem, args)
   }
 
-
   log(level, ...args) {
-    if (this.onLog) this.onLog(this.componentName, level.toLowerCase(), args)
-    else debug(`sio:atem:${level.toLowerCase()}`, args)
+    this.emit('log', { component: this.componentName, level: level.toLowerCase(), message: args })
+    debug(`sio:atem:${level.toLowerCase()}`, args)
   }
 }
 
-export default ATEM
+export default ControllerAtem
