@@ -1,5 +1,16 @@
 # Changelog
 
+## 2021-06-20
+
+- Project renamed to `ControlThemAll` instead of `MIDI2ATEM` since it makes more sense.
+- Add Basic WebServer.
+- Move files around for more logic.
+- Strip the project of testing bloat.
+- Add `ncc` & `caxa` for binary building (may support a runnable app via `tauri` in the future).
+- Move away form `js` files for configuration and instead now using `yaml` files structure.
+- Added ability to enable and disable certain modules (`atem`, `midi`, `webserver`) via config entry (default is all `enabled: false`).
+
+
 ## 2021-06-17
 
 - Move to Event based Communication for MIDI and ATEM connections

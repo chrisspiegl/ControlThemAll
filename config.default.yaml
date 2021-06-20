@@ -1,5 +1,5 @@
 webServer:
-  enabled: true
+  enabled: false
   address: ''
   port: 3333
 
@@ -13,7 +13,7 @@ atem:
   enabled: false
   address: 192.168.10.240
 
-msPerFrame: 33.33333333
+msPerFrame: 33.33333333 # 30fps = 33.33333333 | 24fps = 41.66666667
 
 inputMapping:
   black: 0
@@ -27,14 +27,15 @@ inputMapping:
   cam8: 8
 
 transition:
-  style:
-  type: cut
-  dipWhenProgramAndDveChange: false
+  style: '' # '' = take what is set in atem / choose from DIP, DVE, MIX, STING, and WIPE if want to force one
+  type: cut # can be: auto | cut
+  dipWhenProgramAndDveChange: false # dip to black when DVE Fill Source and Program Change (can not do this with a fade becuase only one M/E in ATEM Mini)
 
 dve:
   fillSource: 1
   stateDefault:
-    rate: 10
+    # The styling parameters available can be seen at: https://nrkno.github.io/tv-automation-atem-connection/interfaces/upstreamkeyerdvesettings.html
+    rate: 10 # flying key speed
     sizeX: 500
     sizeY: 500
     positionX: 12000
@@ -127,6 +128,31 @@ dve:
     maskBottom: 0
     maskRight: 9000
     maskLeft: 9000
+
+# Functionalities which can run upon button press:
+#
+# Generic Actions:
+# - Delay
+# - RunMacro
+# - SendHttpRequest
+#
+# ATEM Actions:
+# - AutoCutSwitch
+# - ChangeAudioGain
+# - ChangeDveMask
+# - ChangeDvePosition
+# - ChangeDveScale
+# - ChangeDveStyle
+# - ChangeProgramSource
+# - ChangeUpstreamKeyerFillSource
+# - FadeToBlack
+# - ResetAudioGain
+# - ResetDveAll
+# - ResetDveMask
+# - ResetDvePosition
+# - ResetDveScale
+# - SwitchProgramAndUpstreamKeyerFillSource
+
 macros:
 - name: TestMacro
   actions:
@@ -172,7 +198,16 @@ macros:
     duration: 500
   - action: ResetDveAll
     buttonsLightOff: [12, 13]
+
+# Funcionalities which can run upon controller twist / fader fade:
+#
+# ATEM Actions:
+# - ChangeAudioGain
+# - ChangeDveMask
+# - ChangeDvePosition
+# - ChangeDveScale
 controllers:
+# LAYER A: DIAL CHANGES
 - note: 0
   action: ChangeDveScale
   defaultValue: 50
@@ -193,20 +228,21 @@ controllers:
   action: ChangeAudioGain
   name: ChangeAudioGainMain
   audioIndex: 1301
-  channels: ["-65280"]
+  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 115
 - note: 6
   action: ChangeAudioGain
   name: ChangeAudioGainDisplay
   audioIndex: 2
-  channels: ["-65280"]
+  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 105
 - note: 7
   action: ChangeAudioGain
   name: ChangeAudioGainPhone
   audioIndex: 4
-  channels: ["-65280"]
+  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 105
+# LAYER B: DIAL CHANGES
 - note: 24
   action: ChangeDveScale
   defaultValue: 50
@@ -227,25 +263,30 @@ controllers:
   action: ChangeAudioGain
   name: ChangeAudioGainMain
   audioIndex: 1301
-  channels: ["-65280"]
+  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 115
 - note: 30
   action: ChangeAudioGain
   name: ChangeAudioGainDisplay
   audioIndex: 2
-  channels: ["-65280"]
+  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 105
 - note: 31
   action: ChangeAudioGain
   name: ChangeAudioGainPhone
   audioIndex: 4
-  channels: ["-65280"]
+  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 105
+# LAYER A: FAIDER CHANGE
 - note: 126
   action: ''
+# LAYER B: FAIDER CHANGE
 - note: 127
   action: ''
+
+
 buttons:
+# LAYER A - DIAL BUTTONS
 - note: 0
   noteOff:
     action: ResetDveScale
@@ -269,22 +310,23 @@ buttons:
     action: ResetAudioGain
     name: ChangeAudioGainMain
     audioIndex: 1301
-    channels: ["-65280"]
+    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 115
 - note: 6
   noteOff:
     action: ResetAudioGain
     name: ChangeAudioGainDisplay
     audioIndex: 2
-    channels: ["-65280"]
+    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 105
 - note: 7
   noteOff:
     action: ResetAudioGain
     name: ChangeAudioGainPhone
     audioIndex: 4
-    channels: ["-65280"]
+    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 105
+# LAYER A - BUTTONS UPPER ROW
 - note: 8
   noteOff:
     action: ChangeProgramSource
@@ -324,10 +366,21 @@ buttons:
 - note: 15
   noteOff:
     action: FadeToBlack
+# LAYER A - BUTTONS LOWER ROW
 - note: 16
   noteOff:
     action: ChangeProgramSource
     programInput: cam1
+# - note: 16
+#   noteOff:
+#     action: 'SendHttpRequest'
+#     type: 'GET'
+#     url: 'http://127.0.0.1:8888/press/bank/1/24'
+#     body:
+# - note: 16
+#   noteOff:
+#     action: 'RunMacro'
+#     name: 'TestMacro'
 - note: 17
   noteOff:
     action: ChangeProgramSource
@@ -359,6 +412,7 @@ buttons:
   noteOff:
     action: ChangeUpstreamKeyerFillSource
     fillSource: cam4
+# LAYER B - DIAL BUTTONS
 - note: 24
   noteOff:
     action: ResetDveScale
@@ -382,22 +436,23 @@ buttons:
     action: ResetAudioGain
     name: ChangeAudioGainMain
     audioIndex: 1301
-    channels: ["-65280"]
+    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 115
 - note: 30
   noteOff:
     action: ResetAudioGain
     name: ChangeAudioGainDisplay
     audioIndex: 2
-    channels: ["-65280"]
+    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 105
 - note: 31
   noteOff:
     action: ResetAudioGain
     name: ChangeAudioGainPhone
     audioIndex: 4
-    channels: ["-65280"]
+    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 105
+# LAYER B - BUTTONS UPPER ROW
 - note: 32
   noteOff:
     action: ChangeProgramSource
@@ -440,6 +495,7 @@ buttons:
 - note: 39
   noteOff:
     action: FadeToBlack
+# LAYER B - BUTTONS LOWER ROW
 - note: 40
   noteOff:
     action: ChangeProgramSource

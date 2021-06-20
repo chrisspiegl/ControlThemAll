@@ -177,30 +177,30 @@ export class ControlThemAll {
         if (this.config.transition.type === 'cut' || this.config.transition.dipWhenProgramAndDveChange === false) {
           this.controllerAtem.changePreviewInput(mainCamId)
           if (this.controllerAtem.isUpstreamKeyerActive()) {
-            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: Enums.TransitionStyle[this.config.transition.style] })
           } else {
-            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: Enums.TransitionStyle[this.config.transition.style] })
           }
           this.controllerAtem.setUpstreamKeyerFillSource(this.config.dve.fillSource)
           if (this.config.transition.type === 'auto') { this.controllerAtem.autoTransition() } else { this.controllerAtem.cut() }
         } else if (this.controllerAtem.getUpstreamKeyerFillSource() !== this.config.dve.fillSource && this.controllerAtem.isUpstreamKeyerActive()) {
           this.controllerAtem.changePreviewInput(this.config.inputMapping.black)
-          this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+          this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: Enums.TransitionStyle[this.config.transition.style] })
           if (this.config.transition.type === 'auto') { this.controllerAtem.autoTransition() } else { this.controllerAtem.cut() }
           setTimeout(() => {
             this.controllerAtem.setUpstreamKeyerFillSource(this.config.dve.fillSource)
-            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: Enums.TransitionStyle[this.config.transition.style] })
             this.controllerAtem.changePreviewInput(mainCamId)
             if (this.config.transition.type === 'auto') { this.controllerAtem.autoTransition() } else { this.controllerAtem.cut() }
           }, this.controllerAtem.getTransitionDuration() * this.config.msPerFrame)
         } else {
           this.controllerAtem.changePreviewInput(mainCamId)
           if (this.controllerAtem.isUpstreamKeyerActive()) {
-            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: Enums.TransitionStyle[this.config.transition.style] })
             this.controllerAtem.autoTransition()
           } else {
             this.controllerAtem.setUpstreamKeyerFillSource(this.config.dve.fillSource)
-            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+            this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: Enums.TransitionStyle[this.config.transition.style] })
             setTimeout(() => {
               this.controllerAtem.autoTransition()
             }, this.config.msPerFrame * 2)
@@ -211,9 +211,9 @@ export class ControlThemAll {
       camSolo: (camId) => {
         this.controllerAtem.changePreviewInput(camId)
         if (this.controllerAtem.isUpstreamKeyerActive()) {
-          this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+          this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Key1, Enums.TransitionSelection.Background ], nextStyle: Enums.TransitionStyle[this.config.transition.style] })
         } else {
-          this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: this.config.transition.style })
+          this.controllerAtem.setTransitionStyle({ nextSelection: [ Enums.TransitionSelection.Background ], nextStyle: Enums.TransitionStyle[this.config.transition.style] })
         }
         if (this.config.transition.type === 'auto') { this.controllerAtem.autoTransition() } else { this.controllerAtem.cut() }
       },
