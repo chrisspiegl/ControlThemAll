@@ -1,5 +1,11 @@
 # Changelog
 
+## 2021-06-21
+
+- Added ability to execute Keyboard Shortcuts as Actions.
+- Fixed Errors when closing the app while no WebServer was started.
+- Started Implementation of Hotkeys (Global System Keyboard Shortcuts to execute Actions just like with Midi)
+
 ## 2021-06-20
 
 - Project renamed to `ControlThemAll` instead of `MIDI2ATEM` since it makes more sense.
