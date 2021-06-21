@@ -8,6 +8,8 @@ import { ControllerWebServer } from './ControllerWebServer.js'
 import { ControllerAtem } from './ControllerAtem.js'
 import { ControllerMidi } from './ControllerMidi.js'
 import { ControllerConfig } from './ControllerConfig.js'
+import { ControllerKeyboard } from './ControllerKeyboard.js'
+// import { ControllerHotkeys } from './ControllerHotkeys.js'
 
 import { asArray, map } from './utils.js'
 
@@ -22,6 +24,8 @@ export class ControlThemAll {
     this.controllerAtem = undefined
     this.controllerWebServer = undefined
     this.controllerConfig = undefined
+    this.controllerKeyboard = undefined
+    this.controllerHotkeys = undefined
 
     this.setup()
   }
@@ -29,34 +33,34 @@ export class ControlThemAll {
   async setup() {
     console.log(`Setting up ControlThemAll Backend`)
     // do something when app is closing
-    process.on('exit', this.exitHandler.bind(this, { exit: true }))
+    // process.on('exit', this.exitHandler.bind(this, { exit: true }))
     // catches ctrl+c event
     process.on('SIGINT', this.exitHandler.bind(this, { cleanup: true }))
     // catches "kill pid" (for example: nodemon restart)
     process.on('SIGUSR1', this.exitHandler.bind(this, { exit: true }))
-    process.on('SIGUSR2', this.exitHandler.bind(this, { exit: true }))
+    process.on('SIGUSR2', this.exitHandler.bind(this, { exit: true, cleanup: true }))
     // catches uncaught exceptions
     process.on('uncaughtException', this.exitHandler.bind(this, { exit: true }))
     process.on('unhandledRejection', async (reason) => console.log(`UNHANDLED:`, reason))
 
+
     this.controllerConfig = new ControllerConfig()
     this.config = await this.controllerConfig.getConfig()
 
+    this.controllerWebServer = new ControllerWebServer({
+      port: this.config.webServer.port,
+      address: this.config.webServer.address,
+      hostname: this.config.webServer.hostname,
+      protocol: this.config.webServer.protocol,
+    })
+
+    this.controllerWebServer.on('connect', () => console.log(`webserver connect`))
+    this.controllerWebServer.on('disconnect', () => console.log(`webserver disconnect`))
+    this.controllerWebServer.on('log', (msg) => console.log(msg))
+
     if (this.config.webServer.enabled) {
-      this.controllerWebServer = new ControllerWebServer({
-        port: this.config.webServer.port,
-        address: this.config.webServer.address,
-        hostname: this.config.webServer.hostname,
-        protocol: this.config.webServer.protocol,
-      })
-
-      this.controllerWebServer.on('connect', () => console.log(`webserver connect`))
-      this.controllerWebServer.on('disconnect', () => console.log(`webserver disconnect`))
-      this.controllerWebServer.on('log', (msg) => console.log(msg))
-
       this.controllerWebServer.connect()
     }
-
 
     this.controllerMidi = new ControllerMidi({
       config: await this.controllerConfig.getConfig()
@@ -89,6 +93,13 @@ export class ControlThemAll {
         address: this.config.atem.address,
       })
     }
+
+    // this.controllerHotkeys = new ControllerHotkeys()
+    // if (this.config.hotkeys.enabled) {
+    //   this.controllerHotkeys.connect({})
+    // }
+
+    this.controllerKeyboard = new ControllerKeyboard()
   }
 
   midiOnConnect(params) {
@@ -109,8 +120,10 @@ export class ControlThemAll {
     const { note, velocity: value, channel } = msg
     const buttonConfig = _.find(this.config.buttons, { note })
     console.log(`buttonConfig:`, buttonConfig)
+    if (_.isEmpty(buttonConfig)) return
     const actionConfig = buttonConfig.noteOn
-    if (_.isEmpty(actionConfig) || _.isEmpty(actionConfig.action)) return
+    console.log(`buttonConfig:`, actionConfig)
+    if (_.isEmpty(actionConfig)) return
     const buttonActionFunction = this.getButtonAction(actionConfig.action)
     if (buttonActionFunction) buttonActionFunction(actionConfig, value)
   }
@@ -120,8 +133,9 @@ export class ControlThemAll {
     const { note, velocity: value, channel } = msg
     const buttonConfig = _.find(this.config.buttons, { note })
     console.log(`buttonConfig:`, buttonConfig)
-    const actionConfig = (buttonConfig.noteOff) ? buttonConfig.noteOff : buttonConfig
-    if (_.isEmpty(actionConfig) || _.isEmpty(actionConfig.action)) return
+    if (_.isEmpty(buttonConfig)) return
+    const actionConfig = buttonConfig.noteOff || buttonConfig
+    if (_.isEmpty(actionConfig)) return
     const buttonActionFunction = this.getButtonAction(actionConfig.action)
     if (buttonActionFunction) buttonActionFunction(actionConfig, value)
   }
@@ -281,6 +295,30 @@ export class ControlThemAll {
 
       Delay: (options, value) => {
         return new Promise(resolve => setTimeout(resolve, options.duration))
+      },
+
+      KeyboardFire: async (options, value) => {
+        return await this.controllerKeyboard.fire(options.combination)
+      },
+
+      KeyboardPress: async (options, value) => {
+        return await this.controllerKeyboard.pressKey(options.combination)
+      },
+
+      KeyboardRelease: async (options, value) => {
+        return await this.controllerKeyboard.releaseKey(options.combination)
+      },
+
+      KeyboardType: async (options, value) => {
+        return await this.controllerKeyboard.type(options.text)
+      },
+
+      KeyboardTypeViaClipboard: async (options, value) => {
+        return await this.controllerKeyboard.typeViaClipboard(options.text)
+      },
+
+      KeyboardTypeViaKeyboard: async (options, value) => {
+        return await this.controllerKeyboard.typeViaKeyboard(options.text)
       },
 
       SendHttpRequest: async (options, value) => {
@@ -639,8 +677,13 @@ export class ControlThemAll {
   }
 
   async exitHandler(options, exitCode) {
-    console.log(`exitHandler with exitCode:${exitCode || 'NONE'}`)
-    console.log(`exitCode:`, exitCode)
+    console.log(`exitHandler with exitCode: ${exitCode || 'NONE'}`)
+
+    setTimeout((err) => {
+      // Force close server after timeout (this is if the cleanUp takes too long)
+      console.log('gentle took too long exiting hard')
+      process.exit(1)
+    }, 10 * 1000) // 10 seconds
 
     if (options.cleanup) {
       console.log('Server closing: Doing the cleanup.')
@@ -655,9 +698,11 @@ export class ControlThemAll {
       await this.controllerWebServer.disconnect()
       await this.controllerMidi.disconnect()
       await this.controllerAtem.disconnect()
+      // await this.controllerHotkeys.disconnect()
 
       console.log('ControlThemAll closed, cleaned, and shutting down!')
-    } else if (options.exit) {
+    }
+    if (options.exit) {
       console.log('ControlThemAll closed all connectiosn successfully… shuting down…')
       process.exit()
     }

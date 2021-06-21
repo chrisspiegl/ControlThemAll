@@ -17,6 +17,7 @@
   "main": "index.js",
   "bin": "index.js",
   "dependencies": {
+    "@nut-tree/nut-js": "^1.6.1-next.20210603163242",
     "atem-connection": "3.0.0-nightly-latest-20210530-132658-16c3cdd.0",
     "atem-state": "^0.10.1",
     "debug": "^4.3.1",

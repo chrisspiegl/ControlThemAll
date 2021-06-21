@@ -133,6 +133,9 @@ dve:
 #
 # Generic Actions:
 # - Delay
+# - KeyboardFire
+# - KeyboardPress
+# - KeyboardRelease
 # - RunMacro
 # - SendHttpRequest
 #
@@ -142,8 +145,10 @@ dve:
 # - ChangeDveMask
 # - ChangeDvePosition
 # - ChangeDveScale
+# - ChangeDveScale
 # - ChangeDveStyle
 # - ChangeProgramSource
+# - ChangeUpstreamKeyerFillSource
 # - ChangeUpstreamKeyerFillSource
 # - FadeToBlack
 # - ResetAudioGain
@@ -154,6 +159,19 @@ dve:
 # - SwitchProgramAndUpstreamKeyerFillSource
 
 macros:
+- name: Keyboard
+  actions:
+  - action: KeyboardFire
+    combination:
+      - LeftSuper
+      - Left
+  - action: Delay
+    duration: 1000
+  - action: KeyboardFire
+    combination:
+      - LeftSuper
+      - Right
+
 - name: TestMacro
   actions:
   - action: Delay
@@ -371,6 +389,24 @@ buttons:
   noteOff:
     action: ChangeProgramSource
     programInput: cam1
+# - note: 16
+#   noteOff:
+#     action: RunMacro
+#     name: Keyboard
+# - note: 16
+#   noteOff:
+#     action: KeyboardFire # fire a keyboard combination
+#     combination:
+#       - LeftSuper
+#       - A
+# - note: 16
+#   noteOff:
+#     action: KeyboardType # this copies the text to the clipboard and then pastes it with CMD+V (this should be instant)
+#     text: Hello this is my text!
+# - note: 16
+#   noteOff:
+#     action: KeyboardTypeViaKeyboard # this types the text one character at a atime (this takes pretty long)
+#     text: Hello this is my text!
 # - note: 16
 #   noteOff:
 #     action: 'SendHttpRequest'
