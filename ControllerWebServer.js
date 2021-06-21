@@ -3,6 +3,8 @@ import { EventEmitter } from 'inf-ee'
 import debug from 'debug'
 import detectPort from 'detect-port'
 
+const log = debug(`sio:webserver`)
+
 export class ControllerWebServer extends EventEmitter {
   constructor(options = {}) {
     super()
@@ -130,7 +132,7 @@ export class ControllerWebServer extends EventEmitter {
 
   log(level, ...args) {
     this.emit('log', { component: this.componentName, level: level.toLowerCase(), message: args })
-    debug(`sio:webserver:${level.toLowerCase()}`, args)
+    log(`${level.toLowerCase()}: ${args}`)
   }
 }
 

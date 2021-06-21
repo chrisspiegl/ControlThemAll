@@ -3,6 +3,8 @@ import debug from 'debug'
 import { throttle } from 'throttle-debounce'
 import { EventEmitter } from 'inf-ee'
 
+const log = debug(`sio:midi`)
+
 const CONNECTION_TIMEOUT = 5000 // ms
 const CONNECTION_RETRY_INTERVAL = 4000 // ms
 const THROTTLE_BUTTON_UPDATE = 250 // ms
@@ -220,7 +222,6 @@ export class ControllerMidi extends EventEmitter {
   }
 
   updateButtonsViaStateInstant(buttonStates) {
-    this.log('debug', 'updateButtonsViaStateInstant')
     buttonStates.forEach((btn) => {
       this.send(btn.state || 'noteoff', {
         note: btn.note,
@@ -231,12 +232,14 @@ export class ControllerMidi extends EventEmitter {
   }
 
   updateButtonsViaState(buttonStates, instant = false) {
-    this.log('debug', 'updateButtonsViaState')
-    if (instant) this.updateButtonsViaStateInstant(buttonStates)
-    else {
+    // this.log('debug', 'updateButtonsViaState')
+    if (instant) {
+      // this.log('debug', 'updateButtonsViaStateInstant')
+      this.updateButtonsViaStateInstant(buttonStates)
+    } else {
       if (!this.updateButtonsViaStateThrottled) {
         this.updateButtonsViaStateThrottled = throttle(THROTTLE_BUTTON_UPDATE, false, (buttonStates) => {
-          this.log('debug', 'updateButtonsViaStateThrottled')
+          // this.log('debug', 'updateButtonsViaStateThrottled')
           return this.updateButtonsViaStateInstant(buttonStates)
         })
       }
@@ -245,7 +248,6 @@ export class ControllerMidi extends EventEmitter {
   }
 
   updateControllersViaStateInstant(controllerStates) {
-    this.log('debug', 'updateControllersViaStateInstant')
     controllerStates.forEach((controller) => {
       const { state, note, value, channel } = controller
       this.sendControllerChange({
@@ -257,12 +259,14 @@ export class ControllerMidi extends EventEmitter {
   }
 
   updateControllersViaState(controllerStates, instant = false) {
-    this.log('debug', 'updateControllersViaState')
-    if (instant) this.updateControllersViaStateInstant(controllerStates)
-    else {
+    // this.log('debug', 'updateControllersViaState')
+    if (instant) {
+      // this.log('debug', 'updateControllersViaStateInstant')
+      this.updateControllersViaStateInstant(controllerStates)
+    } else {
       if (!this.updateControllersViaStateThrottled) {
         this.updateControllersViaStateThrottled = throttle(THROTTLE_CONTROLLER_UPDATE, false, (controllerStates) => {
-          this.log('debug', 'updateControllersViaStateThrottled')
+          // this.log('debug', 'updateControllersViaStateThrottled')
           return this.updateControllersViaStateInstant(controllerStates)
         })
       }
@@ -272,7 +276,7 @@ export class ControllerMidi extends EventEmitter {
 
   log(level, ...args) {
     this.emit('log', { component: this.componentName, level: level.toLowerCase(), message: args })
-    debug(`sio:midi:${level.toLowerCase()}`, args)
+    log(`${level.toLowerCase()}: ${args}`)
   }
 }
 

@@ -2,6 +2,8 @@ import debug from 'debug'
 import { Atem } from 'atem-connection'
 import { EventEmitter } from 'inf-ee'
 
+const log = debug(`sio:atem`)
+
 const ATEM_DEFAULT_ADDRESS = '192.168.10.240'
 
 export class ControllerAtem extends EventEmitter {
@@ -125,7 +127,7 @@ export class ControllerAtem extends EventEmitter {
 
   log(level, ...args) {
     this.emit('log', { component: this.componentName, level: level.toLowerCase(), message: args })
-    debug(`sio:atem:${level.toLowerCase()}`, args)
+    log(`${level.toLowerCase()}: ${args}`)
   }
 }
 
