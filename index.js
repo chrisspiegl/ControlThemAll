@@ -521,6 +521,7 @@ export class ControlThemAll {
           sizeX: value * 10,
           sizeY: value * 10,
         }
+        this.config.dve.stateMain = { ...this.config.dve.stateCurrent }
         this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
         this.updatecontrollerState(this.getControllersByAction('ChangeDveScale'), { value })
         this.controllerMidi.updateControllersViaState(this.config.controllers)
@@ -570,6 +571,7 @@ export class ControlThemAll {
           maskRight: Math.round(9000 - valueWithDirection),
         }
         // console.log(`dveStateLocal:`, this.config.dve.stateCurrent)
+        // this.config.dve.stateMain = { ...this.config.dve.stateCurrent }
         this.controllerAtem.setUpstreamKeyerDVESettings(this.config.dve.stateCurrent)
         this.updatecontrollerState(this.getControllersByAction('ChangeDveMask'), { value })
         this.controllerMidi.updateControllersViaState(this.config.controllers)
@@ -664,7 +666,7 @@ export class ControlThemAll {
   resetControllersToDefault(controllerStates) {
     // console.log(`resetControllersToDefault:`, controllerStates)
     controllerStates = asArray(controllerStates)
-    const { controllers } = config
+    const { controllers } = this.config
     controllerStates = controllerStates.map((controllerState) => merge(controllerState, { state: 'cc', value: controllerState.defaultValue || 0 }))
     controllers.map((controller) => {
       let updatedControllerState = _.find(controllerStates, (el) => el.action === controller.action)
