@@ -26,7 +26,7 @@ export class ControllerAtem extends EventEmitter {
 
     this._atem = new Atem()
 
-    this._atem.on('debug', (msg) => this.log('debug', msg))
+    // this._atem.on('debug', (msg) => this.log('debug', msg))
     this._atem.on('info', (msg) => this.log('info', msg))
     this._atem.on('error', (msg) => this.log('error', msg))
 
