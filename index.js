@@ -260,7 +260,7 @@ export class ControlThemAll {
         this.getActionChain('camWithDve')(dveCamId)
       },
 
-      changeAudioGain: (options, value) => { // expected value == between 0 and 127
+      changeAudioSourceGain: (options, value) => { // expected value == between 0 and 127
         const { note, audioIndex, channels, defaultValue, range } = options
         if (value !== 0 && !value || value === -1) value = defaultValue
 
@@ -448,7 +448,7 @@ export class ControlThemAll {
         this.controllerMidi.updateControllersViaState(this.config.controllers)
       },
 
-      ResetAudioGain: (options, value) => this.getActionChain('changeAudioGain')(options),
+      ResetAudioSourceGain: (options, value) => this.getActionChain('changeAudioSourceGain')(options),
       ToggleAudioSourceMixOption: (options, value) => this.getActionChain('toggleAudioSourceMixOption')(options, value),
 
       ChangeDveStyle: (options, value) => {
@@ -578,7 +578,7 @@ export class ControlThemAll {
         this.controllerMidi.updateButtonsViaState(this.config.buttons)
       },
 
-      ChangeAudioGain: (options, value) => this.getActionChain('changeAudioGain')(options, value),
+      ChangeAudioSourceGain: (options, value) => this.getActionChain('changeAudioSourceGain')(options, value),
     }
     return controllerActions[name]
   }
@@ -689,7 +689,7 @@ export class ControlThemAll {
     for (const path of pathToChange) {
       const isInitial = (path === 'initial')
       if (isInitial) {
-        // find all ChangeAudioGain controllers and set them to their default
+        // find all ChangeAudioSourceGain controllers and set them to their default
         for (const controller of this.config.controllers) {
           if (controller.defaultValue) {
             const controlAction = this.getControllerAction(controller.action)

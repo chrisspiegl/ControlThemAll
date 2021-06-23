@@ -141,7 +141,7 @@ dve:
 #
 # ATEM Actions:
 # - AutoCutSwitch
-# - ChangeAudioGain
+# - ChangeAudioSourceGain
 # - ChangeDveMask
 # - ChangeDvePosition
 # - ChangeDveScale
@@ -151,7 +151,7 @@ dve:
 # - ChangeUpstreamKeyerFillSource
 # - ChangeUpstreamKeyerFillSource
 # - FadeToBlack
-# - ResetAudioGain
+# - ResetAudioSourceGain
 # - ResetDveAll
 # - ResetDveMask
 # - ResetDvePosition
@@ -220,7 +220,7 @@ macros:
 # Funcionalities which can run upon controller twist / fader fade:
 #
 # ATEM Actions:
-# - ChangeAudioGain
+# - ChangeAudioSourceGain
 # - ChangeDveMask
 # - ChangeDvePosition
 # - ChangeDveScale
@@ -243,20 +243,20 @@ controllers:
 - note: 4
   action: ''
 - note: 5
-  action: ChangeAudioGain
-  name: ChangeAudioGainMain
+  action: ChangeAudioSourceGain
+  name: ChangeAudioSourceGainMain
   audioIndex: 1301
   channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 115
 - note: 6
-  action: ChangeAudioGain
-  name: ChangeAudioGainDisplay
+  action: ChangeAudioSourceGain
+  name: ChangeAudioSourceGainDisplay
   audioIndex: 2
   channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 105
 - note: 7
-  action: ChangeAudioGain
-  name: ChangeAudioGainPhone
+  action: ChangeAudioSourceGain
+  name: ChangeAudioSourceGainPhone
   audioIndex: 4
   channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 105
@@ -278,20 +278,20 @@ controllers:
 - note: 28
   action: ''
 - note: 29
-  action: ChangeAudioGain
-  name: ChangeAudioGainMain
+  action: ChangeAudioSourceGain
+  name: ChangeAudioSourceGainMain
   audioIndex: 1301
   channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 115
 - note: 30
-  action: ChangeAudioGain
-  name: ChangeAudioGainDisplay
+  action: ChangeAudioSourceGain
+  name: ChangeAudioSourceGainDisplay
   audioIndex: 2
   channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 105
 - note: 31
-  action: ChangeAudioGain
-  name: ChangeAudioGainPhone
+  action: ChangeAudioSourceGain
+  name: ChangeAudioSourceGainPhone
   audioIndex: 4
   channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
   defaultValue: 105
@@ -325,22 +325,22 @@ buttons:
     action: ''
 - note: 5
   noteOff:
-    action: ResetAudioGain
-    name: ChangeAudioGainMain
+    action: ResetAudioSourceGain
+    name: ChangeAudioSourceGainMain
     audioIndex: 1301
     channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 115
 - note: 6
   noteOff:
-    action: ResetAudioGain
-    name: ChangeAudioGainDisplay
+    action: ResetAudioSourceGain
+    name: ChangeAudioSourceGainDisplay
     audioIndex: 2
     channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 105
 - note: 7
   noteOff:
-    action: ResetAudioGain
-    name: ChangeAudioGainPhone
+    action: ResetAudioSourceGain
+    name: ChangeAudioSourceGainPhone
     audioIndex: 4
     channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 105
@@ -475,22 +475,22 @@ buttons:
     action: ''
 - note: 29
   noteOff:
-    action: ResetAudioGain
-    name: ChangeAudioGainMain
+    action: ResetAudioSourceGain
+    name: ChangeAudioSourceGainMain
     audioIndex: 1301
     channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 115
 - note: 30
   noteOff:
-    action: ResetAudioGain
-    name: ChangeAudioGainDisplay
+    action: ResetAudioSourceGain
+    name: ChangeAudioSourceGainDisplay
     audioIndex: 2
     channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 105
 - note: 31
   noteOff:
-    action: ResetAudioGain
-    name: ChangeAudioGainPhone
+    action: ResetAudioSourceGain
+    name: ChangeAudioSourceGainPhone
     audioIndex: 4
     channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 105
