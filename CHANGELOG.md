@@ -6,6 +6,9 @@
   + Toggle Audio Input or Channel between `On`, `Off`, and `AudioFollowVideo`
 - Added Feedback for Audio Mix Option
   + Make button on midi controller on/off based on state of AudioMixOption
+- Update name of `ResetAudioGain` to `ResetAudioSourceGain` and `ChangeAudioGain` to `ChangeAudioSourceGain`
+- Ability to have MIDI Controller Buttons Flashing between `noteon` and `noteoff` state.
+  + This adds a third signification between being off and on for example for states like `FadeToBlack` and in the future `AudioFollowVideo` states.
 
 ## 2021-06-21
 
