@@ -13,7 +13,7 @@ import { ControllerKeyboard } from './ControllerKeyboard.js'
 
 import { asArray, map, getEnumByValue } from './utils.js'
 
-const MIDI_RESEND_INTERVAL = 1000 // ms
+const MIDI_RESEND_INTERVAL = 500 // ms
 
 export class ControlThemAll {
   constructor() {
@@ -590,6 +590,13 @@ export class ControlThemAll {
     this.updateButtonState(btns, { state: 'noteon', value: 127 }, 'note')
   }
 
+  switchButtonLightFlashing(btns) {
+    btns = asArray(btns)
+    // console.log(`switchButtonLightFlashing:`, btns)
+    btns = btns.map((btn) => { return { note: btn }})
+    this.updateButtonState(btns, { state: 'flashingon', value: 127 }, 'note')
+  }
+
   switchButtonLightOff(btns) {
     btns = asArray(btns)
     // console.log(`switchButtonLightOff:`, btns)
@@ -730,7 +737,7 @@ export class ControlThemAll {
         this.updateDveButtons()
 
         if (state.video.mixEffects[me].fadeToBlack.isFullyBlack) {
-          this.switchButtonLightOn(this.getButtonsByAction('FadeToBlack'))
+          this.switchButtonLightFlashing(this.getButtonsByAction('FadeToBlack'))
         } else {
           this.switchButtonLightOff(this.getButtonsByAction('FadeToBlack'))
         }

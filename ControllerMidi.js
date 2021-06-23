@@ -223,7 +223,12 @@ export class ControllerMidi extends EventEmitter {
 
   updateButtonsViaStateInstant(buttonStates) {
     buttonStates.forEach((btn) => {
-      this.send(btn.state || 'noteoff', {
+      let state = (btn.state || 'noteoff').toLowerCase()
+      if (['flashingon', 'flashingoff'].includes(state)) {
+        btn.state = (state === 'flashingon') ? 'flashingoff' : 'flashingon'
+        state = (state === 'flashingon') ? 'noteoff' : 'noteon'
+      }
+      this.send(state, {
         note: btn.note,
         velocity: btn.value || btn.defaultValue || 0,
         channel: btn.channel || this.config?.midi?.outputChannel || 10,
