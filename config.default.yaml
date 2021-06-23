@@ -380,10 +380,16 @@ buttons:
     buttonsLightOff: [12, 36]
 - note: 14
   noteOff:
-    action: AutoCutSwitch
+    # action: AutoCutSwitch
+    action: SwitchProgramAndUpstreamKeyerFillSource
 - note: 15
   noteOff:
-    action: FadeToBlack
+    # action: FadeToBlack
+    action: ToggleAudioSourceMixOption
+    audioIndex: 1301
+    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+    defaultValue: on
+    toggle: ['on', 'off']
 # LAYER A - BUTTONS LOWER ROW
 - note: 16
   noteOff:
@@ -566,16 +572,53 @@ buttons:
     fillSource: cam2
 
 feedback:
+  forFairlightInputAudioMixOption:
+    1:
+      '-65280': # Joined
+      '-256': # Left
+      '-255': # Right
+    2:
+      '-65280': # Joined
+      '-256': # Left
+      '-255': # Right
+    3:
+      '-65280': # Joined
+      '-256': # Left
+      '-255': # Right
+    4:
+      '-65280': # Joined
+      '-256': # Left
+      '-255': # Right
+    1301:
+      '-65280': # Joined
+        On:
+          noteOn: [15]
+          noteOff: []
+        Off:
+          noteOn: []
+          noteOff: [15]
+        AudioFollowVideo:
+          noteOn: []
+          noteOff: []
+      '-256': # Left
+      '-255': # Right
+    1302:
+      '-65280': # Joined
+      '-256': # Left
+      '-255': # Right
+
   buttonsForProgramInputWithoutDve:
     cam1: [16, 40]
     cam2: [9, 43]
     cam3: [10, 41]
     cam4: [11, 42]
+
   buttonsForProgramInputWithDve:
     cam1: [8, 32]
     cam2: [17, 35]
     cam3: [18, 33]
     cam4: [19, 34]
+
   buttonsForActiveUpstreamKeyerFillSource:
     cam1: [20, 44]
     cam2: [21, 47]

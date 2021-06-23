@@ -11,7 +11,7 @@ import { ControllerConfig } from './ControllerConfig.js'
 import { ControllerKeyboard } from './ControllerKeyboard.js'
 // import { ControllerHotkeys } from './ControllerHotkeys.js'
 
-import { asArray, map } from './utils.js'
+import { asArray, map, getEnumByValue } from './utils.js'
 
 const MIDI_RESEND_INTERVAL = 1000 // ms
 
@@ -273,6 +273,39 @@ export class ControlThemAll {
         this.updatecontrollerState(this.getControllersByName(options.name), { value }, 'name')
         this.controllerMidi.updateControllersViaState(this.config.controllers)
       },
+
+      toggleAudioSourceMixOption: (options, value) => {
+        const { note, audioIndex, channels, defaultValue, toggle, range } = options
+
+        function FairlightAudioMixOptions(el) {
+          el = `${el}`.toLowerCase()
+          if (['audiofollowvideo', 'audiofollowsvideo', 'afv'].includes(el)) el = Enums.FairlightAudioMixOption.AudioFollowVideo
+          else if(['active', 'on'].includes(el)) el = Enums.FairlightAudioMixOption.On
+          else el = Enums.FairlightAudioMixOption.Off
+          return el
+        }
+
+        const defaultValueBasedOnEnum = FairlightAudioMixOptions(defaultValue)
+        const toggleBasedOnEnum = toggle.map((el) => FairlightAudioMixOptions(el))
+
+        const fairlightInput = this.controllerAtem.getState().fairlight.inputs[audioIndex]
+        if (!fairlightInput) {
+          console.log(`Fairlight Input ${audioIndex} not found!`)
+          return
+        }
+        for (const channel of asArray(channels)) {
+          const audioChannel = fairlightInput.sources[channel]
+          if (!audioChannel) {
+            console.log(`Fairlight Input ${audioIndex} channel ${audioChannel} not found!`)
+            return
+          }
+          const mixOptionCurrent = audioChannel.properties.mixOption
+          const currentIndex = toggleBasedOnEnum.indexOf(mixOptionCurrent);
+          const nextIndex = (currentIndex + 1) % toggleBasedOnEnum.length;
+          const mixOption = toggleBasedOnEnum[nextIndex]
+          this.controllerAtem.setFairlightAudioMixerSourceProps(audioIndex, channel, { mixOption })
+        }
+      }
     }
     return actionChains[name]
   }
@@ -416,6 +449,7 @@ export class ControlThemAll {
       },
 
       ResetAudioGain: (options, value) => this.getActionChain('changeAudioGain')(options),
+      ToggleAudioSourceMixOption: (options, value) => this.getActionChain('toggleAudioSourceMixOption')(options, value),
 
       ChangeDveStyle: (options, value) => {
         this.config.dve.stateCurrent = {
@@ -471,7 +505,7 @@ export class ControlThemAll {
 
       SwitchProgramAndUpstreamKeyerFillSource: (options, value) => {
         this.getActionChain('switchProgramAndDveSource')()
-      }
+      },
     }
     return buttonActions[name]
   }
@@ -632,6 +666,21 @@ export class ControlThemAll {
     })
   }
 
+  feedbackFairlightAudioMixOptions(audioIndex, audioChannel) {
+    const forFairlightInputAudioMixOption = this.config.feedback.forFairlightInputAudioMixOption
+    const feedbackForAudioIndex = forFairlightInputAudioMixOption[audioIndex]
+    if (feedbackForAudioIndex) {
+      const feedbackForAudioChannel = feedbackForAudioIndex[audioChannel]
+      if (feedbackForAudioChannel) {
+        const mixOptionCurrent = this.controllerAtem.getState().fairlight.inputs[audioIndex].sources[audioChannel].properties.mixOption
+        const mixOptionCurrentName = Enums.FairlightAudioMixOption[mixOptionCurrent]
+        const noteStates = feedbackForAudioChannel[mixOptionCurrentName]
+        if (noteStates.noteOn) this.switchButtonLightOn(noteStates.noteOn)
+        if (noteStates.noteOff) this.switchButtonLightOff(noteStates.noteOff)
+      } else console.log(`No feedback configured for audio index ${audioIndex} and channel ${audioChannel}.`)
+    } else console.log(`No feedback configured for audio index ${audioIndex}.`)
+  }
+
   runStateUpate(state, pathToChange = null) {
     const me = 0
     const usk = 0
@@ -647,7 +696,26 @@ export class ControlThemAll {
             if (controlAction) controlAction(controller)
           }
         }
+        // Transition Type is not transmitted from ATEM State so it is just a state on the midi controller itself
+        if (this.config.transition.type === 'auto') this.switchButtonLightOn(this.getButtonsByAction('AutoCutSwitch'))
+        else this.switchButtonLightOff(this.getButtonsByAction('AutoCutSwitch'))
+
+        // Initial Audio Channel Mix Option Feedback (On, Off, AudioFollowVideo)
+        for (const audioIndex in this.config.feedback.forFairlightInputAudioMixOption) {
+          for (const audioChannel in this.config.feedback.forFairlightInputAudioMixOption[audioIndex]) {
+            this.feedbackFairlightAudioMixOptions(audioIndex, audioChannel)
+          }
+        }
       }
+
+      // Updating Audio Mix Option Feedback
+      // On / Off / AudioFollowVideo
+      if (isInitial || path.includes('fairlight.inputs')) {
+        const [, audioIndex, audioChannel] = (/fairlight\.inputs\.([0-9]*)\.sources\.(-[0-9]*)\.properties/g).exec(path)
+        this.feedbackFairlightAudioMixOptions(audioIndex, audioChannel)
+      }
+
+      // Updating Active Camera in Program & DVE Feedback
       if (isInitial || path.includes('video.mixEffects')) {
         const programInput = state.video.mixEffects[me].programInput
         const hasDve = state.video.mixEffects[me].upstreamKeyers[usk].onAir
@@ -660,9 +728,6 @@ export class ControlThemAll {
         this.switchButtonLightOn(buttonsForProgramInput)
 
         this.updateDveButtons()
-
-        if (this.config.transition.type === 'auto') this.switchButtonLightOn(this.getButtonsByAction('AutoCutSwitch'))
-        else this.switchButtonLightOff(this.getButtonsByAction('AutoCutSwitch'))
 
         if (state.video.mixEffects[me].fadeToBlack.isFullyBlack) {
           this.switchButtonLightOn(this.getButtonsByAction('FadeToBlack'))

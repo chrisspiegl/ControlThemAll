@@ -1,5 +1,12 @@
 # Changelog
 
+## 2021-06-23
+
+- Added ToggleAudioMixOption
+  + Toggle Audio Input or Channel between `On`, `Off`, and `AudioFollowVideo`
+- Added Feedback for Audio Mix Option
+  + Make button on midi controller on/off based on state of AudioMixOption
+
 ## 2021-06-21
 
 - Added ability to execute Keyboard Shortcuts as Actions.
