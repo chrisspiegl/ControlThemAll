@@ -3,11 +3,6 @@
   windows_subsystem = "windows"
 )]
 
-#![cfg_attr(
-  all(not(debug_assertions), target_os = "windows"),
-  windows_subsystem = "windows"
-)]
-
 use std::sync::{Mutex, Arc};
 use regex::Regex;
 use tauri::{
@@ -15,10 +10,19 @@ use tauri::{
   Manager,
   Menu,
   MenuItem,
-  Submenu
+  Submenu,
+  CustomMenuItem,
+  SystemTray,
+  SystemTrayMenu,
+  SystemTrayEvent
 };
 
+
 fn main() {
+  let menu_system_tray = SystemTrayMenu::new()
+    .add_item(CustomMenuItem::new("show".to_string(), "Show"))
+    .add_item(CustomMenuItem::new("quit".to_string(), "Quit"));
+
   let menu_app = Menu::new()
     .add_native_item(MenuItem::About("ConnectThemAll".to_string()))
     .add_native_item(MenuItem::Separator)
@@ -53,6 +57,37 @@ fn main() {
   tauri::Builder::default()
     // Menu Configuration
     .menu(menu_complete)
+    // System Tray Configuration
+    .system_tray(SystemTray::new().with_menu(menu_system_tray))
+    .on_system_tray_event(|app, event| match event {
+      SystemTrayEvent::MenuItemClick { id, .. } => {
+        match id.as_str() {
+          "quit" => {
+            std::process::exit(0);
+          }
+          "show" => {
+            let window = app.get_window("main");
+            if !window.is_some() {
+              // TODO: Currently defaults to always opening a new window becuase the `app.get_window….is_some()` is buggy
+              println!("WINDOW EXISTS JUST SHOW IT");
+              let win_unwr = window.unwrap();
+              win_unwr.show().unwrap();
+              win_unwr.set_focus().unwrap();
+            } else {
+              println!("WINDOW NEEDS TO BE CREATED");
+              // app.create_window(
+              //   "Tauri".into(),
+              //   WindowUrl::App("index.html".into()),
+              //   |window_builder, webview_attributes| { (window_builder.title("Tauri"), webview_attributes) }
+              // ).unwrap();
+            }
+          }
+          _ => {}
+        }
+      }
+      _ => {}
+    })
+    // Setup the App
     .setup(|app| {
       let window = app.get_window("main").unwrap();
 

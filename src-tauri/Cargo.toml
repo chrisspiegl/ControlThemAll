@@ -18,7 +18,7 @@ tauri-build = { version = "1.0.0-beta.4" }
 serde_json = "1.0"
 regex = "1"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.0.0-beta.8", features = ["shell-execute", "shell-open"] }
+tauri = { version = "1.0.0-beta.8", features = ["shell-execute", "shell-open", "system-tray"] }
 
 [features]
 default = [ "custom-protocol" ]
