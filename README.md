@@ -20,7 +20,7 @@ npm install -g pnpm
 
 ### Installation
 
-1. Download thie Repository ([ZIP](https://github.com/chrisspiegl/midi2atem/archive/refs/heads/main.zip))
+1. Download this Repository ([ZIP](https://github.com/chrisspiegl/midi2atem/archive/refs/heads/main.zip))
 2. Unzip and open Terminal into that folder
 3. run `pnpm install`
 4. start the app with `pnpm start`

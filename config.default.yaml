@@ -13,6 +13,9 @@ atem:
   enabled: false
   address: 192.168.10.240
 
+hotkeys:
+  enabled: false
+
 msPerFrame: 33.33333333 # 30fps = 33.33333333 | 24fps = 41.66666667
 
 inputMapping:
@@ -67,7 +70,7 @@ dve:
       sizeY: 360
       positionX: 9700
       positionY: -5100
-      maskEnabled: false
+      maskEnabled: true
       maskTop: 0
       maskBottom: 0
       maskRight: 0
@@ -163,14 +166,30 @@ macros:
   actions:
   - action: KeyboardFire
     combination:
-      - LeftSuper
+      - LeftControl
+      - LeftAlt
       - Left
   - action: Delay
     duration: 1000
   - action: KeyboardFire
     combination:
-      - LeftSuper
+      - LeftControl
+      - LeftAlt
+      - Left
+  - action: Delay
+    duration: 1000
+  - action: KeyboardFire
+    combination:
+      - LeftControl
+      - LeftAlt
       - Right
+  - action: Delay
+    duration: 1000
+  - action: KeyboardFire
+    combination:
+      - LeftControl
+      - LeftAlt
+      - Num2
 
 - name: TestMacro
   actions:

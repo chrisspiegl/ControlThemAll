@@ -1,8 +1,8 @@
-import _ from 'lodash'
+import { find, isEmpty, difference, flatten } from 'lodash-es'
 import got from 'got'
 import merge from 'deepmerge'
 import { Enums } from 'atem-connection'
-import { EventEmitter } from 'inf-ee'
+// import { EventEmitter } from 'inf-ee'
 
 import { ControllerWebServer } from './ControllerWebServer.js'
 import { ControllerAtem } from './ControllerAtem.js'
@@ -118,12 +118,12 @@ export class ControlThemAll {
   midiOnNoteOn(msg) {
     console.log(`NOTE ON:`, msg)
     const { note, velocity: value, channel } = msg
-    const buttonConfig = _.find(this.config.buttons, { note })
+    const buttonConfig = find(this.config.buttons, { note })
     console.log(`buttonConfig:`, buttonConfig)
-    if (_.isEmpty(buttonConfig)) return
+    if (isEmpty(buttonConfig)) return
     const actionConfig = buttonConfig.noteOn
     console.log(`buttonConfig:`, actionConfig)
-    if (_.isEmpty(actionConfig)) return
+    if (isEmpty(actionConfig)) return
     const buttonActionFunction = this.getButtonAction(actionConfig.action)
     if (buttonActionFunction) buttonActionFunction(actionConfig, value)
   }
@@ -131,11 +131,11 @@ export class ControlThemAll {
   midiOnNoteOff(msg) {
     console.log(`NOTE OFF:`, msg)
     const { note, velocity: value, channel } = msg
-    const buttonConfig = _.find(this.config.buttons, { note })
+    const buttonConfig = find(this.config.buttons, { note })
     console.log(`buttonConfig:`, buttonConfig)
-    if (_.isEmpty(buttonConfig)) return
+    if (isEmpty(buttonConfig)) return
     const actionConfig = buttonConfig.noteOff || buttonConfig
-    if (_.isEmpty(actionConfig)) return
+    if (isEmpty(actionConfig)) return
     const buttonActionFunction = this.getButtonAction(actionConfig.action)
     if (buttonActionFunction) buttonActionFunction(actionConfig, value)
   }
@@ -143,7 +143,7 @@ export class ControlThemAll {
   midiOnControllerChange(msg) {
     console.log(`CONTROLLER CHANGE:`, msg)
     const { controller: note, value, channel } = msg
-    const controllerConfig = _.find(this.config.controllers, { note })
+    const controllerConfig = find(this.config.controllers, { note })
     console.log(`controllerConfig:`, controllerConfig)
     const controlAction = this.getControllerAction(controllerConfig.action)
     if (controlAction) controlAction(controllerConfig, value)
@@ -315,10 +315,10 @@ export class ControlThemAll {
       RunMacro: async (options, value) => {
         // console.log(`options:`, options)
         const { name } = options
-        const macroConfig = _.find(this.config.macros, { name })
+        const macroConfig = find(this.config.macros, { name })
         const { actions } = macroConfig
         for (const actionConfig of actions) {
-          if (_.isEmpty(actionConfig) || _.isEmpty(actionConfig.action)) return
+          if (isEmpty(actionConfig) || isEmpty(actionConfig.action)) return
           const buttonActionFunction = this.getButtonAction(actionConfig.action)
           // console.log(`before ${actionConfig.action}`)
           if (buttonActionFunction) await buttonActionFunction(actionConfig, value)
@@ -361,10 +361,10 @@ export class ControlThemAll {
           console.log('url must be present')
           return
         }
-        type = (!_.isEmpty(type)) ? type.toLowerCase() : 'get'
+        type = (!isEmpty(type)) ? type.toLowerCase() : 'get'
         type = ['get', 'post', 'path', 'delete', 'put', 'head'].includes(type) ? type : 'get'
-        body = (type !== 'get' && !_.isEmpty(body)) ? body : undefined
-        headers = (!_.isEmpty(headers)) ? headers : { 'Content-Type': 'application/json' }
+        body = (type !== 'get' && !isEmpty(body)) ? body : undefined
+        headers = (!isEmpty(headers)) ? headers : { 'Content-Type': 'application/json' }
         try {
           const response = await got[type](options.url, { body, headers })
           console.log('HTTP Request Response: ', response.body)
@@ -607,23 +607,39 @@ export class ControlThemAll {
   }
 
   getButtonsByAction(action) {
-    return _.map(_.filter(this.config.buttons, (el) => el.action === action || el.noteOn?.action == action || el.noteOff?.action == action), (el) => el.note)
+    return this.config.buttons
+      .filter(
+        (el) =>
+          el.action === action ||
+          el.noteOn?.action == action ||
+          el.noteOff?.action == action
+      )
+      .map((el) => el.note);
+    // return map(filter(this.config.buttons, (el) => el.action === action || el.noteOn?.action == action || el.noteOff?.action == action), (el) => el.note)
   }
 
   getButtonsByNoteOffAction(action) {
-    return _.map(_.filter(this.config.buttons, (el) => el.noteOff?.action == action), (el) => el.note)
+    this.config.buttons
+      .filter((el) => el.noteOff?.action == action)
+      .map((el) => el.note);
+    // return map(filter(this.config.buttons, (el) => el.noteOff?.action == action), (el) => el.note)
   }
 
   getButtonsByNoteOnAction(action) {
-    return _.map(_.filter(this.config.buttons, (el) => el.noteOn?.action == action), (el) => el.note)
+    return this.config.buttons
+      .filter((el) => el.noteOn?.action == action)
+      .map((el) => el.note);
+    // return map(filter(this.config.buttons, (el) => el.noteOn?.action == action), (el) => el.note)
   }
 
   getControllersByAction(action) {
-    return _.filter(this.config.controllers, (el) => el.action === action)
+    return this.config.controllers.filter((el) => el.action === action);
+    // return filter(this.config.controllers, (el) => el.action === action)
   }
 
   getControllersByName(name) {
-    return _.filter(this.config.controllers, (el) => el.name === name)
+    return this.config.controllers.filter((el) => el.name === name);
+    // return filter(this.config.controllers, (el) => el.name === name)
   }
 
   updateButtonState(buttonStates, overwrite = {}, via = 'action') {
@@ -632,7 +648,7 @@ export class ControlThemAll {
       return { state: 'noteoff', value: buttonState.defaultValue || 0, ...buttonState, ...overwrite}
     })
     this.config.buttons = this.config.buttons.map((button) => {
-      let updatedButtonState = _.find(buttonStates, (el) => el[via] === button[via])
+      let updatedButtonState = find(buttonStates, (el) => el[via] === button[via])
       if (updatedButtonState) {
         button.value = updatedButtonState.value
         button.state = updatedButtonState.state
@@ -645,7 +661,7 @@ export class ControlThemAll {
     const buttonsForDveSelection = this.config.feedback.buttonsForActiveUpstreamKeyerFillSource
     const nameOfInput = Object.keys(this.config.inputMapping).find(key => this.config.inputMapping[key] === this.config.dve.fillSource)
     const buttonActiveDveFillSource = buttonsForDveSelection[nameOfInput]
-    this.switchButtonLightOff(_.difference(_.flatten(Object.values(buttonsForDveSelection)), buttonActiveDveFillSource))
+    this.switchButtonLightOff(difference(flatten(Object.values(buttonsForDveSelection)), buttonActiveDveFillSource))
     this.switchButtonLightOn(buttonActiveDveFillSource)
   }
 
@@ -655,7 +671,7 @@ export class ControlThemAll {
       return { state: 'cc', value: controllerState.defaultValue || 0, ...controllerState, ...overwrite}
     })
     this.config.controllers = this.config.controllers.map((controller) => {
-      let updatedControllerState = _.find(controllerStates, (el) => el[via] === controller[via])
+      let updatedControllerState = find(controllerStates, (el) => el[via] === controller[via])
       if (updatedControllerState) {
         controller.value = updatedControllerState.value
       }
@@ -669,7 +685,7 @@ export class ControlThemAll {
     const { controllers } = this.config
     controllerStates = controllerStates.map((controllerState) => merge(controllerState, { state: 'cc', value: controllerState.defaultValue || 0 }))
     controllers.map((controller) => {
-      let updatedControllerState = _.find(controllerStates, (el) => el.action === controller.action)
+      let updatedControllerState = find(controllerStates, (el) => el.action === controller.action)
       if (updatedControllerState) controller.value = updatedControllerState.value
       return controller
     })
@@ -732,8 +748,8 @@ export class ControlThemAll {
         const buttonsForProgramInputWithDve = this.config.feedback.buttonsForProgramInputWithDve
         const nameOfInput = Object.keys(this.config.inputMapping).find(key => this.config.inputMapping[key] === programInput)
         const buttonsForProgramInput = (hasDve) ? buttonsForProgramInputWithDve[nameOfInput] : buttonsForProgramInputWithoutDve[nameOfInput]
-        const buttonsForProgramInputAll = [..._.flatten(Object.values(buttonsForProgramInputWithoutDve)), ..._.flatten(Object.values(buttonsForProgramInputWithDve))]
-        this.switchButtonLightOff(_.difference(buttonsForProgramInputAll, buttonsForProgramInput))
+        const buttonsForProgramInputAll = [...flatten(Object.values(buttonsForProgramInputWithoutDve)), ...flatten(Object.values(buttonsForProgramInputWithDve))]
+        this.switchButtonLightOff(difference(buttonsForProgramInputAll, buttonsForProgramInput))
         this.switchButtonLightOn(buttonsForProgramInput)
 
         this.updateDveButtons()
@@ -763,7 +779,7 @@ export class ControlThemAll {
       console.log('Server closing: Doing the cleanup.')
 
       if (this.controllerMidi.isConnected()) {
-        this.switchButtonLightOff(_.flatten(this.config.buttons.map((el) => [el.note])))
+        this.switchButtonLightOff(flatten(this.config.buttons.map((el) => [el.note])))
         this.controllerMidi.updateButtonsViaState(this.config.buttons)
         this.updatecontrollerState(this.config.controllers.map((el) => merge(el, { state: 'cc', value: 0 })))
         this.controllerMidi.updateControllersViaState(this.config.controllers)

@@ -2,45 +2,41 @@
   "type": "module",
   "private": true,
   "name": "controlthemall",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
-    "dev": "pnpm run start:dev",
-    "start": "node .",
-    "start:dev": "nodemon ./index.js",
-    "build": "pnpm run build:ncc && pnpm run build:caxa",
-    "build:app": "pnpm run build:ncc && pnpm run build:caxa:app",
-    "build:ncc": "ncc build index.js -o dist/ncc",
-    "build:caxa": "caxa --input \"dist/ncc\" --output \"dist/bin/ControlThemAll\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
-    "build:caxa:app": "caxa --input \"dist/ncc\" --output \"dist/bin/ControlThemAll.app\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
+    "dev": "run-s start:dev",
+    "start": "run-s start:dev",
+    "start:dev": "nodemon .",
+    "cu": "ncu",
+    "cu:fix": "ncu -u"
   },
   "main": "index.js",
   "bin": "index.js",
   "dependencies": {
-    "@nut-tree/nut-js": "^1.6.1-next.20210603163242",
-    "atem-connection": "3.0.0-nightly-latest-20210530-132658-16c3cdd.0",
-    "atem-state": "^0.10.1",
-    "debug": "^4.3.1",
-    "deep-object-diff": "^1.1.0",
+    "@nut-tree/nut-js": "^2.0.0-RC1",
+    "atem-connection": "3.0.0-nightly-latest-20211125-222857-2b30eea.0",
+    "atem-state": "^0.12.2",
+    "debug": "^4.3.3",
     "deepmerge": "^4.2.2",
     "detect-port": "^1.3.0",
-    "easymidi": "^2.0.5",
-    "express": "^4.17.1",
-    "got": "^11.8.2",
+    "easymidi": "^2.1.0",
+    "express": "^4.17.2",
+    "got": "^12.0.0",
     "inf-ee": "^1.0.4",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "throttle-debounce": "^3.0.1",
     "yaml": "^1.10.2"
   },
   "devDependencies": {
-    "caxa": "^2.0.0",
-    "nodemon": "^2.0.7"
+    "nodemon": "^2.0.15",
+    "npm-check-updates": "^12.0.5",
+    "npm-run-all": "^4.1.5"
   },
   "author": {
     "name": "Chris Spiegl",
     "email": "chris@chrisspiegl.com",
     "url": "https://chrisspiegl.com/"
   },
-  "homepage": "https://github.com/chrisspiegl/midi2atem",
+  "homepage": "https://github.com/chrisspiegl/ControlThemAll",
   "license": "UNLICENSED"
 }
