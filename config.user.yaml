@@ -1,8 +1,0 @@
-webServer:
-  enabled: true
-
-midi:
-  enabled: false
-
-atem:
-  enabled: false

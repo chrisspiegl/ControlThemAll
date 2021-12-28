@@ -1,5 +1,32 @@
 # Changelog
 
+## 2021-12-28
+
+- Put the whole tauri thing into a branch on the ControlThemAll Github Repository
+- Backend: make WebserverController & TauriController work without the others so that they wait or each other and the backend can be launched appropriately.
+- Backend: make WebserverController react to checkPort, start, stop, and status actions.
+- Frontend: Buttons & Input fields for Port and server Start/Stop as well as display the status
+## 2021-12-23
+
+- Backend: Implemented class structure for all things
+- Backend: Made Webserver start/stop work and do so gracefully
+- Backend: Test & Implement new Event & Queue based actions so the ControlThemAll Controller does not have any logic left over and instead everything is handled inside the respective Controllers (this works at least for one way of communication, when an action is triggered [midi button press] the midi controller sends the attached actions to the event queue and the ControlThemAllController Queue Worker then dispatches the actions in order)
+- Backend: Got a working system with SystemController Delay (so the actions are executed in order and are waiting for async tasks)
+- Backend: TauriController: built a theoretical connection so that the frontend can send `[{action arrays}]` with commands too (this means that the frontend can trigger `{ handler: 'WebServerController', name: 'start', ...params }` and it will reach the webServer accordingly) [untested]
+
+## 2021-12-22
+
+Starting the development of the Tauri Application which wraps the ControlThemAll Backend into a executable app bundle.
+
+- Tauri Demo Project on new Branch
+- Sidecar Node.JS Webserver
+- Vue Building for Frontend with Router and Store (no persistence)
+- Calling the Sidecar Webserver from inside Vue which is loaded inside Tauri (via ky)
+- Running the Backend and Frontend outside of Tauri for easy development
+- Communicating between sidecar backend and vue frontend through rust process and events (pass through)
+- Know if backend is inside Tauri Container (via arg and stored in `inTauri` const)
+- Know if the frontend is inside Tauri Container and show (via `window.__TAURI__` and displayed in sidebar, but needs to be stored in vuex store for easy access through state)
+
 ## 2021-06-23
 
 - Added ToggleAudioMixOption
