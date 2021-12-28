@@ -1,0 +1,180 @@
+ControlThemAll:
+  version: 1
+  type: full
+
+WebServerController:
+  enabled: true
+  address: ''
+  port: 3333
+
+AtemController:
+  enabled: false
+  address: 192.168.10.240
+  inputMapping:
+    black: 0
+    cam1: 1
+    cam2: 2
+    cam3: 3
+    cam4: 4
+    cam5: 5
+    cam6: 6
+    cam7: 7
+    cam8: 8
+  state:
+    - name: ProgramInputWithoutDve
+      programInput: cam1
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [16, 40]
+    - name: ProgramInputWithoutDve
+      programInput: cam2
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [9, 43]
+    - name: ProgramInputWithoutDve
+      programInput: cam3
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [10, 41]
+    - name: ProgramInputWithoutDve
+      programInput: cam4
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [11, 42]
+
+    - name: ProgramInputWithDve
+      programInput: cam1
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [8, 32]
+    - name: ProgramInputWithDve
+      programInput: cam2
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [17, 35]
+    - name: ProgramInputWithDve
+      programInput: cam3
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [18, 33]
+    - name: ProgramInputWithDve
+      programInput: cam4
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [19, 34]
+
+    - name: ActiveUpstreamKeyerFillSource
+      programInput: cam1
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [20, 44]
+    - name: ActiveUpstreamKeyerFillSource
+      programInput: cam2
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [21, 47]
+    - name: ActiveUpstreamKeyerFillSource
+      programInput: cam3
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [22, 45]
+    - name: ActiveUpstreamKeyerFillSource
+      programInput: cam4
+      actions:
+        - handler: MidiController
+          name: 'NoteOff'
+          note: [8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 44, 47, 45, 46]
+        - handler: MidiController
+          name: 'NoteOn'
+          note: [23, 46]
+
+MidiController:
+  enabled: false
+  inputDeviceName: X-TOUCH MINI
+  outputDeviceName: X-TOUCH MINI
+  outputChannel: 10
+  buttons:
+    - name: NoteOff
+      note: 0
+      actions:
+        - handler: AtemController
+          name: ChangeProgramSource
+          programInput: cam1
+        - handler: MidiController
+          name: 'NoteOn'
+          note: 8
+        - handler: SystemController
+          name: Delay
+          duration: 500
+        - handler: MidiController
+          name: 'NoteOff'
+          note: 8
+
+    - name: NoteOff
+      note: 1
+      actions:
+        - name: ChangeProgramSource
+          programInput: 0
+
+MacroController:
+  - name: TestMacro
+    actions:
+      - handler: AtemController
+        name: ChangeProgramSource
+        programInput: cam1
+      - handler: SystemController
+        name: Delay
+        duration: 500
+      - handler: AtemController
+        name: ChangeProgramSource
+        programInput: cam2
+      - handler: SystemController
+        name: Delay
+        duration: 500
+      - handler: AtemController
+        name: ChangeProgramSource
+        programInput: cam1
