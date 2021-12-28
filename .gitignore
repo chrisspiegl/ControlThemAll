@@ -58,6 +58,7 @@ typings/
 .env
 
 dist
+_package
 
 media
 

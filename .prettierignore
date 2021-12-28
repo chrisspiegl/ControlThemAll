@@ -1,0 +1,4 @@
+_package
+src-tauri/binaries
+src-tauri/target
+pnpm-lock.yaml
