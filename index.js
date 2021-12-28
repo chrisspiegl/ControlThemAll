@@ -736,8 +736,12 @@ export class ControlThemAll {
       // Updating Audio Mix Option Feedback
       // On / Off / AudioFollowVideo
       if (isInitial || path.includes('fairlight.inputs')) {
-        const [, audioIndex, audioChannel] = (/fairlight\.inputs\.([0-9]*)\.sources\.(-[0-9]*)\.properties/g).exec(path)
-        this.feedbackFairlightAudioMixOptions(audioIndex, audioChannel)
+        try {
+          const [, audioIndex, audioChannel] = (/fairlight\.inputs\.([0-9]*)\.sources\.(-[0-9]*)\.properties/g).exec(path)
+          this.feedbackFairlightAudioMixOptions(audioIndex, audioChannel)
+        } catch (error) {
+          console.log('could not handle fairlight/initial inputs');
+        }
       }
 
       // Updating Active Camera in Program & DVE Feedback
