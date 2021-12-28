@@ -1,8 +1,8 @@
 webServer:
-  enabled: true
+  enabled: false
 
 midi:
-  enabled: false
+  enabled: true
 
 atem:
-  enabled: false
+  enabled: true
