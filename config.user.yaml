@@ -2,10 +2,10 @@ webServer:
   enabled: false
 
 midi:
-  enabled: true
+  enabled: false
 
 atem:
-  enabled: true
+  enabled: false
 
 streamDeck:
-  enabled: true
+  enabled: false
