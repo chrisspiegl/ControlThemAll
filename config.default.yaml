@@ -9,6 +9,108 @@ midi:
   outputDeviceName: X-TOUCH MINI
   outputChannel: 10
 
+streamDeck:
+  enabled: false
+  model: ''
+  serialNumber: ''
+  buttons:
+    - button: 0
+      label: 'DVE Cam1'
+      up:
+        action: ChangeUpstreamKeyerFillSource
+        fillSource: cam1
+    - button: 1
+      label: 'DVE Cam2'
+      up:
+        action: ChangeUpstreamKeyerFillSource
+        fillSource: cam2
+    - button: 2
+      label: 'DVE Cam3'
+      up:
+        action: ChangeUpstreamKeyerFillSource
+        fillSource: cam3
+    - button: 3
+      label: 'DVE Cam4'
+      up:
+        action: ChangeUpstreamKeyerFillSource
+        fillSource: cam4
+    - button: 5
+      label: 'Cam1 PiP'
+      up:
+        action: ChangeProgramSource
+        programInput: cam1
+        withUpstreamKeyer: true
+    - button: 6
+      label: 'Cam2'
+      up:
+        action: ChangeProgramSource
+        programInput: cam2
+        withUpstreamKeyer: false
+    - button: 7
+      label: 'Cam3'
+      up:
+        action: ChangeProgramSource
+        programInput: cam3
+        withUpstreamKeyer: false
+    - button: 8
+      label: 'Cam4'
+      up:
+        action: ChangeProgramSource
+        programInput: cam4
+        withUpstreamKeyer: false
+    - button: 10
+      label: 'Cam1'
+      up:
+        action: ChangeProgramSource
+        programInput: cam1
+        withUpstreamKeyer: false
+    - button: 11
+      label: 'Cam2 PiP'
+      up:
+        action: ChangeProgramSource
+        programInput: cam2
+        withUpstreamKeyer: true
+    - button: 12
+      label: 'Cam3 PiP'
+      up:
+        action: ChangeProgramSource
+        programInput: cam3
+        withUpstreamKeyer: true
+    - button: 13
+      label: 'Cam4 PiP'
+      up:
+        action: ChangeProgramSource
+        programInput: cam4
+        withUpstreamKeyer: true
+
+    - button: 4
+      label: 'DVE Phone'
+      up:
+        action: ChangeDveStyle
+        style: phone
+        programInput: cam4
+        fillSource: cam1
+    - button: 9
+      label: 'DVE Monitor'
+      up:
+        action: ChangeDveStyle
+        style: monitor
+        programInput: cam1
+        fillSource: cam2
+    - button: 14
+      # label: 'Switch'
+      label: 'DVE Reset'
+      up:
+        # action: ChangeDveStyle
+        # style: default
+        # programInput: cam1
+        # fillSource: cam1
+        # action: AutoCutSwitch
+        # action: SwitchProgramAndUpstreamKeyerFillSource
+        action: RunMacro
+        name: ResetDVE
+
+
 atem:
   enabled: false
   address: 192.168.10.240
@@ -85,52 +187,53 @@ dve:
       maskBottom: 0
       maskRight: 0
       maskLeft: 12050
+    default:
   positions:
-  - sizeX: 500
-    sizeY: 500
-    positionX: 12000
-    positionY: -4000
-    maskEnabled: true
-    maskTop: 0
-    maskBottom: 0
-    maskRight: 9000
-    maskLeft: 9000
-  - sizeX: 900
-    sizeY: 900
-    positionX: 0
-    positionY: 0
-    maskEnabled: true
-    maskTop: 0
-    maskBottom: 0
-    maskRight: 0
-    maskLeft: 0
-  - sizeX: 500
-    sizeY: 500
-    positionX: -12000
-    positionY: -4000
-    maskEnabled: true
-    maskTop: 0
-    maskBottom: 0
-    maskRight: 9000
-    maskLeft: 9000
-  - sizeX: 500
-    sizeY: 500
-    positionX: -12000
-    positionY: 4000
-    maskEnabled: true
-    maskTop: 0
-    maskBottom: 0
-    maskRight: 9000
-    maskLeft: 9000
-  - sizeX: 500
-    sizeY: 500
-    positionX: 12000
-    positionY: 4000
-    maskEnabled: true
-    maskTop: 0
-    maskBottom: 0
-    maskRight: 9000
-    maskLeft: 9000
+    - sizeX: 500
+      sizeY: 500
+      positionX: 12000
+      positionY: -4000
+      maskEnabled: true
+      maskTop: 0
+      maskBottom: 0
+      maskRight: 9000
+      maskLeft: 9000
+    - sizeX: 900
+      sizeY: 900
+      positionX: 0
+      positionY: 0
+      maskEnabled: true
+      maskTop: 0
+      maskBottom: 0
+      maskRight: 0
+      maskLeft: 0
+    - sizeX: 500
+      sizeY: 500
+      positionX: -12000
+      positionY: -4000
+      maskEnabled: true
+      maskTop: 0
+      maskBottom: 0
+      maskRight: 9000
+      maskLeft: 9000
+    - sizeX: 500
+      sizeY: 500
+      positionX: -12000
+      positionY: 4000
+      maskEnabled: true
+      maskTop: 0
+      maskBottom: 0
+      maskRight: 9000
+      maskLeft: 9000
+    - sizeX: 500
+      sizeY: 500
+      positionX: 12000
+      positionY: 4000
+      maskEnabled: true
+      maskTop: 0
+      maskBottom: 0
+      maskRight: 9000
+      maskLeft: 9000
 
 # Functionalities which can run upon button press:
 #
@@ -162,79 +265,84 @@ dve:
 # - SwitchProgramAndUpstreamKeyerFillSource
 
 macros:
-- name: Keyboard
-  actions:
-  - action: KeyboardFire
-    combination:
-      - LeftControl
-      - LeftAlt
-      - Left
-  - action: Delay
-    duration: 1000
-  - action: KeyboardFire
-    combination:
-      - LeftControl
-      - LeftAlt
-      - Left
-  - action: Delay
-    duration: 1000
-  - action: KeyboardFire
-    combination:
-      - LeftControl
-      - LeftAlt
-      - Right
-  - action: Delay
-    duration: 1000
-  - action: KeyboardFire
-    combination:
-      - LeftControl
-      - LeftAlt
-      - Num2
+  - name: ResetDVE
+    actions:
+      - action: ResetDveScale
+      - action: ResetDvePosition
+      - action: ResetDveMask
+  - name: Keyboard
+    actions:
+      - action: KeyboardFire
+        combination:
+          - LeftControl
+          - LeftAlt
+          - Left
+      - action: Delay
+        duration: 1000
+      - action: KeyboardFire
+        combination:
+          - LeftControl
+          - LeftAlt
+          - Left
+      - action: Delay
+        duration: 1000
+      - action: KeyboardFire
+        combination:
+          - LeftControl
+          - LeftAlt
+          - Right
+      - action: Delay
+        duration: 1000
+      - action: KeyboardFire
+        combination:
+          - LeftControl
+          - LeftAlt
+          - Num2
 
-- name: TestMacro
-  actions:
-  - action: Delay
-    duration: 500
-  - action: ResetDveScale
-    buttonsLightOff: [12, 13]
-  - action: Delay
-    duration: 500
-  - action: ResetDvePosition
-    buttonsLightOff: [12, 13]
-  - action: Delay
-    duration: 500
-  - action: ChangeDveStyle
-    style: monitor
-    programInput: cam1
-    fillSource: cam2
-    buttonsLightOn: [12, 36]
-    buttonsLightOff: [13, 37]
-  - action: Delay
-    duration: 500
-  - action: ResetDveMask
-    buttonsLightOff: [12, 13]
-  - action: Delay
-    duration: 500
-  - action: ChangeProgramSource
-    programInput: cam1
-    withUpstreamKeyer: true
-  - action: Delay
-    duration: 500
-  - action: ChangeUpstreamKeyerFillSource
-    fillSource: cam3
-    when: instant
-  - action: Delay
-    duration: 500
-  - action: ChangeDveStyle
-    style: phone
-    programInput: cam4
-    fillSource: cam1
-    buttonsLightOn: [12, 36]
-    buttonsLightOff: [13, 37]
-  - action: Delay
-    duration: 500
-  - action: ResetDveAll
-    buttonsLightOff: [12, 13]
+  - name: TestMacro
+    actions:
+      - action: Delay
+        duration: 500
+      - action: ResetDveScale
+        buttonsLightOff: [12, 13]
+      - action: Delay
+        duration: 500
+      - action: ResetDvePosition
+        buttonsLightOff: [12, 13]
+      - action: Delay
+        duration: 500
+      - action: ChangeDveStyle
+        style: monitor
+        programInput: cam1
+        fillSource: cam2
+        buttonsLightOn: [12, 36]
+        buttonsLightOff: [13, 37]
+      - action: Delay
+        duration: 500
+      - action: ResetDveMask
+        buttonsLightOff: [12, 13]
+      - action: Delay
+        duration: 500
+      - action: ChangeProgramSource
+        programInput: cam1
+        withUpstreamKeyer: true
+      - action: Delay
+        duration: 500
+      - action: ChangeUpstreamKeyerFillSource
+        fillSource: cam3
+        when: instant
+      - action: Delay
+        duration: 500
+      - action: ChangeDveStyle
+        style: phone
+        programInput: cam4
+        fillSource: cam1
+        buttonsLightOn: [12, 36]
+        buttonsLightOff: [13, 37]
+      - action: Delay
+        duration: 500
+      - action: ResetDveAll
+        buttonsLightOff: [12, 13]
 
 # Funcionalities which can run upon controller twist / fader fade:
 #
@@ -244,351 +352,350 @@ macros:
 # - ChangeDvePosition
 # - ChangeDveScale
 controllers:
-# LAYER A: DIAL CHANGES
-- note: 0
-  action: ChangeDveScale
-  defaultValue: 50
-  buttonsLightOff: [12, 13]
-- note: 1
-  action: ChangeDvePosition
-  defaultValue: 65
-  buttonsLightOff: [12, 13]
-- note: 2
-  action: ChangeDveMask
-  defaultValue: 64
-  buttonsLightOff: [12, 13]
-- note: 3
-  action: ''
-- note: 4
-  action: ''
-- note: 5
-  action: ChangeAudioSourceGain
-  name: ChangeAudioSourceGainMain
-  audioIndex: 1301
-  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-  defaultValue: 115
-- note: 6
-  action: ChangeAudioSourceGain
-  name: ChangeAudioSourceGainDisplay
-  audioIndex: 2
-  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-  defaultValue: 105
-- note: 7
-  action: ChangeAudioSourceGain
-  name: ChangeAudioSourceGainPhone
-  audioIndex: 4
-  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-  defaultValue: 105
-# LAYER B: DIAL CHANGES
-- note: 24
-  action: ChangeDveScale
-  defaultValue: 50
-  buttonsLightOff: [12, 13]
-- note: 25
-  action: ChangeDvePosition
-  defaultValue: 65
-  buttonsLightOff: [12, 13]
-- note: 26
-  action: ChangeDveMask
-  defaultValue: 64
-  buttonsLightOff: [12, 13]
-- note: 27
-  action: ''
-- note: 28
-  action: ''
-- note: 29
-  action: ChangeAudioSourceGain
-  name: ChangeAudioSourceGainMain
-  audioIndex: 1301
-  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-  defaultValue: 115
-- note: 30
-  action: ChangeAudioSourceGain
-  name: ChangeAudioSourceGainDisplay
-  audioIndex: 2
-  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-  defaultValue: 105
-- note: 31
-  action: ChangeAudioSourceGain
-  name: ChangeAudioSourceGainPhone
-  audioIndex: 4
-  channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-  defaultValue: 105
-# LAYER A: FAIDER CHANGE
-- note: 126
-  action: ''
-# LAYER B: FAIDER CHANGE
-- note: 127
-  action: ''
-
+  # LAYER A: DIAL CHANGES
+  - note: 0
+    action: ChangeDveScale
+    defaultValue: 50
+    buttonsLightOff: [12, 13]
+  - note: 1
+    action: ChangeDvePosition
+    defaultValue: 65
+    buttonsLightOff: [12, 13]
+  - note: 2
+    action: ChangeDveMask
+    defaultValue: 64
+    buttonsLightOff: [12, 13]
+  - note: 3
+    action: ''
+  - note: 4
+    action: ''
+  - note: 5
+    action: ChangeAudioSourceGain
+    name: ChangeAudioSourceGainMain
+    audioIndex: 1301
+    channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+    defaultValue: 115
+  - note: 6
+    action: ChangeAudioSourceGain
+    name: ChangeAudioSourceGainDisplay
+    audioIndex: 2
+    channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+    defaultValue: 105
+  - note: 7
+    action: ChangeAudioSourceGain
+    name: ChangeAudioSourceGainPhone
+    audioIndex: 4
+    channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+    defaultValue: 105
+  # LAYER B: DIAL CHANGES
+  - note: 24
+    action: ChangeDveScale
+    defaultValue: 50
+    buttonsLightOff: [12, 13]
+  - note: 25
+    action: ChangeDvePosition
+    defaultValue: 65
+    buttonsLightOff: [12, 13]
+  - note: 26
+    action: ChangeDveMask
+    defaultValue: 64
+    buttonsLightOff: [12, 13]
+  - note: 27
+    action: ''
+  - note: 28
+    action: ''
+  - note: 29
+    action: ChangeAudioSourceGain
+    name: ChangeAudioSourceGainMain
+    audioIndex: 1301
+    channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+    defaultValue: 115
+  - note: 30
+    action: ChangeAudioSourceGain
+    name: ChangeAudioSourceGainDisplay
+    audioIndex: 2
+    channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+    defaultValue: 105
+  - note: 31
+    action: ChangeAudioSourceGain
+    name: ChangeAudioSourceGainPhone
+    audioIndex: 4
+    channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+    defaultValue: 105
+  # LAYER A: FAIDER CHANGE
+  - note: 126
+    action: ''
+  # LAYER B: FAIDER CHANGE
+  - note: 127
+    action: ''
 
 buttons:
-# LAYER A - DIAL BUTTONS
-- note: 0
-  noteOff:
-    action: ResetDveScale
-    buttonsLightOff: [12, 13]
-- note: 1
-  noteOff:
-    action: ResetDvePosition
-    buttonsLightOff: [12, 13]
-- note: 2
-  noteOff:
-    action: ResetDveMask
-    buttonsLightOff: [12, 13]
-- note: 3
-  noteOff:
-    action: ''
-- note: 4
-  noteOff:
-    action: ''
-- note: 5
-  noteOff:
-    action: ResetAudioSourceGain
-    name: ChangeAudioSourceGainMain
-    audioIndex: 1301
-    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-    defaultValue: 115
-- note: 6
-  noteOff:
-    action: ResetAudioSourceGain
-    name: ChangeAudioSourceGainDisplay
-    audioIndex: 2
-    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-    defaultValue: 105
-- note: 7
-  noteOff:
-    action: ResetAudioSourceGain
-    name: ChangeAudioSourceGainPhone
-    audioIndex: 4
-    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-    defaultValue: 105
-# LAYER A - BUTTONS UPPER ROW
-- note: 8
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam1
-    withUpstreamKeyer: true
-- note: 9
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam2
-- note: 10
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam3
-- note: 11
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam4
-- note: 12
-  noteOff:
-    action: ChangeDveStyle
-    style: phone
-    programInput: cam1
-    fillSource: cam4
-    buttonsLightOn: [12, 36]
-    buttonsLightOff: [13, 37]
-- note: 13
-  noteOff:
-    action: ChangeDveStyle
-    style: monitor
-    programInput: cam1
-    fillSource: cam2
-    buttonsLightOn: [13, 37]
-    buttonsLightOff: [12, 36]
-- note: 14
-  noteOff:
-    # action: AutoCutSwitch
-    action: SwitchProgramAndUpstreamKeyerFillSource
-- note: 15
-  noteOff:
-    # action: FadeToBlack
-    action: ToggleAudioSourceMixOption
-    audioIndex: 1301
-    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-    defaultValue: on
-    toggle: ['on', 'off']
-# LAYER A - BUTTONS LOWER ROW
-- note: 16
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam1
-# - note: 16
-#   noteOff:
-#     action: RunMacro
-#     name: Keyboard
-# - note: 16
-#   noteOff:
-#     action: KeyboardFire # fire a keyboard combination
-#     combination:
-#       - LeftSuper
-#       - A
-# - note: 16
-#   noteOff:
-#     action: KeyboardType # this copies the text to the clipboard and then pastes it with CMD+V (this should be instant)
-#     text: Hello this is my text!
-# - note: 16
-#   noteOff:
-#     action: KeyboardTypeViaKeyboard # this types the text one character at a atime (this takes pretty long)
-#     text: Hello this is my text!
-# - note: 16
-#   noteOff:
-#     action: 'SendHttpRequest'
-#     type: 'GET'
-#     url: 'http://127.0.0.1:8888/press/bank/1/24'
-#     body:
-# - note: 16
-#   noteOff:
-#     action: 'RunMacro'
-#     name: 'TestMacro'
-- note: 17
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam2
-    withUpstreamKeyer: true
-- note: 18
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam3
-    withUpstreamKeyer: true
-- note: 19
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam4
-    withUpstreamKeyer: true
-- note: 20
-  noteOff:
-    action: ChangeUpstreamKeyerFillSource
-    fillSource: cam1
-- note: 21
-  noteOff:
-    action: ChangeUpstreamKeyerFillSource
-    fillSource: cam2
-- note: 22
-  noteOff:
-    action: ChangeUpstreamKeyerFillSource
-    fillSource: cam3
-- note: 23
-  noteOff:
-    action: ChangeUpstreamKeyerFillSource
-    fillSource: cam4
-# LAYER B - DIAL BUTTONS
-- note: 24
-  noteOff:
-    action: ResetDveScale
-    buttonsLightOff: [12, 13]
-- note: 25
-  noteOff:
-    action: ResetDvePosition
-    buttonsLightOff: [12, 13]
-- note: 26
-  noteOff:
-    action: ResetDveMask
-    buttonsLightOff: [12, 13]
-- note: 27
-  noteOff:
-    action: ''
-- note: 28
-  noteOff:
-    action: ''
-- note: 29
-  noteOff:
-    action: ResetAudioSourceGain
-    name: ChangeAudioSourceGainMain
-    audioIndex: 1301
-    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-    defaultValue: 115
-- note: 30
-  noteOff:
-    action: ResetAudioSourceGain
-    name: ChangeAudioSourceGainDisplay
-    audioIndex: 2
-    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-    defaultValue: 105
-- note: 31
-  noteOff:
-    action: ResetAudioSourceGain
-    name: ChangeAudioSourceGainPhone
-    audioIndex: 4
-    channels: ["-65280"] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
-    defaultValue: 105
-# LAYER B - BUTTONS UPPER ROW
-- note: 32
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam1
-    withUpstreamKeyer: true
-- note: 33
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam3
-    withUpstreamKeyer: true
-- note: 34
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam4
-    withUpstreamKeyer: true
-- note: 35
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam2
-    withUpstreamKeyer: true
-- note: 36
-  noteOff:
-    action: ChangeDveStyle
-    style: phone
-    programInput: cam4
-    fillSource: cam1
-    buttonsLightOn: [12, 36]
-    buttonsLightOff: [13, 37]
-- note: 37
-  noteOff:
-    action: ChangeDveStyle
-    style: monitor
-    programInput: cam1
-    fillSource: cam2
-    buttonsLightOn: [13, 37]
-    buttonsLightOff: [12, 36]
-- note: 38
-  noteOff:
-    action: SwitchProgramAndUpstreamKeyerFillSource
-- note: 39
-  noteOff:
-    action: FadeToBlack
-# LAYER B - BUTTONS LOWER ROW
-- note: 40
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam1
-- note: 41
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam3
-- note: 42
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam4
-- note: 43
-  noteOff:
-    action: ChangeProgramSource
-    programInput: cam2
-- note: 44
-  noteOff:
-    action: ChangeUpstreamKeyerFillSource
-    fillSource: cam1
-- note: 45
-  noteOff:
-    action: ChangeUpstreamKeyerFillSource
-    fillSource: cam3
-- note: 46
-  noteOff:
-    action: ChangeUpstreamKeyerFillSource
-    fillSource: cam4
-- note: 47
-  noteOff:
-    action: ChangeUpstreamKeyerFillSource
-    fillSource: cam2
+  # LAYER A - DIAL BUTTONS
+  - note: 0
+    noteOff:
+      action: ResetDveScale
+      buttonsLightOff: [12, 13]
+  - note: 1
+    noteOff:
+      action: ResetDvePosition
+      buttonsLightOff: [12, 13]
+  - note: 2
+    noteOff:
+      action: ResetDveMask
+      buttonsLightOff: [12, 13]
+  - note: 3
+    noteOff:
+      action: ''
+  - note: 4
+    noteOff:
+      action: ''
+  - note: 5
+    noteOff:
+      action: ResetAudioSourceGain
+      name: ChangeAudioSourceGainMain
+      audioIndex: 1301
+      channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+      defaultValue: 115
+  - note: 6
+    noteOff:
+      action: ResetAudioSourceGain
+      name: ChangeAudioSourceGainDisplay
+      audioIndex: 2
+      channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+      defaultValue: 105
+  - note: 7
+    noteOff:
+      action: ResetAudioSourceGain
+      name: ChangeAudioSourceGainPhone
+      audioIndex: 4
+      channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+      defaultValue: 105
+  # LAYER A - BUTTONS UPPER ROW
+  - note: 8
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam1
+      withUpstreamKeyer: true
+  - note: 9
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam2
+  - note: 10
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam3
+  - note: 11
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam4
+  - note: 12
+    noteOff:
+      action: ChangeDveStyle
+      style: phone
+      programInput: cam1
+      fillSource: cam4
+      buttonsLightOn: [12, 36]
+      buttonsLightOff: [13, 37]
+  - note: 13
+    noteOff:
+      action: ChangeDveStyle
+      style: monitor
+      programInput: cam1
+      fillSource: cam2
+      buttonsLightOn: [13, 37]
+      buttonsLightOff: [12, 36]
+  - note: 14
+    noteOff:
+      # action: AutoCutSwitch
+      action: SwitchProgramAndUpstreamKeyerFillSource
+  - note: 15
+    noteOff:
+      # action: FadeToBlack
+      action: ToggleAudioSourceMixOption
+      audioIndex: 1301
+      channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+      defaultValue: on
+      toggle: ['on', 'off']
+  # LAYER A - BUTTONS LOWER ROW
+  - note: 16
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam1
+  # - note: 16
+  #   noteOff:
+  #     action: RunMacro
+  #     name: Keyboard
+  # - note: 16
+  #   noteOff:
+  #     action: KeyboardFire # fire a keyboard combination
+  #     combination:
+  #       - LeftSuper
+  #       - A
+  # - note: 16
+  #   noteOff:
+  #     action: KeyboardType # this copies the text to the clipboard and then pastes it with CMD+V (this should be instant)
+  #     text: Hello this is my text!
+  # - note: 16
+  #   noteOff:
+  #     action: KeyboardTypeViaKeyboard # this types the text one character at a atime (this takes pretty long)
+  #     text: Hello this is my text!
+  # - note: 16
+  #   noteOff:
+  #     action: 'SendHttpRequest'
+  #     type: 'GET'
+  #     url: 'http://127.0.0.1:8888/press/bank/1/24'
+  #     body:
+  # - note: 16
+  #   noteOff:
+  #     action: 'RunMacro'
+  #     name: 'TestMacro'
+  - note: 17
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam2
+      withUpstreamKeyer: true
+  - note: 18
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam3
+      withUpstreamKeyer: true
+  - note: 19
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam4
+      withUpstreamKeyer: true
+  - note: 20
+    noteOff:
+      action: ChangeUpstreamKeyerFillSource
+      fillSource: cam1
+  - note: 21
+    noteOff:
+      action: ChangeUpstreamKeyerFillSource
+      fillSource: cam2
+  - note: 22
+    noteOff:
+      action: ChangeUpstreamKeyerFillSource
+      fillSource: cam3
+  - note: 23
+    noteOff:
+      action: ChangeUpstreamKeyerFillSource
+      fillSource: cam4
+  # LAYER B - DIAL BUTTONS
+  - note: 24
+    noteOff:
+      action: ResetDveScale
+      buttonsLightOff: [12, 13]
+  - note: 25
+    noteOff:
+      action: ResetDvePosition
+      buttonsLightOff: [12, 13]
+  - note: 26
+    noteOff:
+      action: ResetDveMask
+      buttonsLightOff: [12, 13]
+  - note: 27
+    noteOff:
+      action: ''
+  - note: 28
+    noteOff:
+      action: ''
+  - note: 29
+    noteOff:
+      action: ResetAudioSourceGain
+      name: ChangeAudioSourceGainMain
+      audioIndex: 1301
+      channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+      defaultValue: 115
+  - note: 30
+    noteOff:
+      action: ResetAudioSourceGain
+      name: ChangeAudioSourceGainDisplay
+      audioIndex: 2
+      channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+      defaultValue: 105
+  - note: 31
+    noteOff:
+      action: ResetAudioSourceGain
+      name: ChangeAudioSourceGainPhone
+      audioIndex: 4
+      channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+      defaultValue: 105
+  # LAYER B - BUTTONS UPPER ROW
+  - note: 32
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam1
+      withUpstreamKeyer: true
+  - note: 33
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam3
+      withUpstreamKeyer: true
+  - note: 34
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam4
+      withUpstreamKeyer: true
+  - note: 35
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam2
+      withUpstreamKeyer: true
+  - note: 36
+    noteOff:
+      action: ChangeDveStyle
+      style: phone
+      programInput: cam4
+      fillSource: cam1
+      buttonsLightOn: [12, 36]
+      buttonsLightOff: [13, 37]
+  - note: 37
+    noteOff:
+      action: ChangeDveStyle
+      style: monitor
+      programInput: cam1
+      fillSource: cam2
+      buttonsLightOn: [13, 37]
+      buttonsLightOff: [12, 36]
+  - note: 38
+    noteOff:
+      action: SwitchProgramAndUpstreamKeyerFillSource
+  - note: 39
+    noteOff:
+      action: FadeToBlack
+  # LAYER B - BUTTONS LOWER ROW
+  - note: 40
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam1
+  - note: 41
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam3
+  - note: 42
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam4
+  - note: 43
+    noteOff:
+      action: ChangeProgramSource
+      programInput: cam2
+  - note: 44
+    noteOff:
+      action: ChangeUpstreamKeyerFillSource
+      fillSource: cam1
+  - note: 45
+    noteOff:
+      action: ChangeUpstreamKeyerFillSource
+      fillSource: cam3
+  - note: 46
+    noteOff:
+      action: ChangeUpstreamKeyerFillSource
+      fillSource: cam4
+  - note: 47
+    noteOff:
+      action: ChangeUpstreamKeyerFillSource
+      fillSource: cam2
 
 feedback:
   forFairlightInputAudioMixOption:
@@ -643,3 +750,21 @@ feedback:
     cam2: [21, 47]
     cam3: [22, 45]
     cam4: [23, 46]
+
+  streamDeckForProgramInputWithoutDve:
+    cam1: [16]
+    cam2: [9]
+    cam3: [10]
+    cam4: [11]
+
+  streamDeckForProgramInputWithDve:
+    cam1: [8]
+    cam2: [17]
+    cam3: [18]
+    cam4: [19]
+
+  streamDeckForActiveUpstreamKeyerFillSource:
+    cam1: [20]
+    cam2: [21]
+    cam3: [22]
+    cam4: [23]

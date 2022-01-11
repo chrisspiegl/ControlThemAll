@@ -6,3 +6,6 @@ midi:
 
 atem:
   enabled: true
+
+streamDeck:
+  enabled: true
