@@ -1,4 +1,4 @@
-import Buffer from 'node:buffer';
+import {Buffer} from 'node:buffer';
 import sharp from 'sharp';
 import {fabric} from 'fabric';
 
