@@ -153,7 +153,7 @@ inputMapping:
 transition:
   style: '' # '' = take what is set in atem / choose from DIP, DVE, MIX, STING, and WIPE if want to force one
   type: cut # can be: auto | cut
-  dipWhenProgramAndDveChange: false # dip to black when DVE Fill Source and Program Change (can not do this with a fade becuase only one M/E in ATEM Mini)
+  dipWhenProgramAndDveChange: false # dip to black when DVE Fill Source and Program Change (can not do this with a fade because only one M/E in ATEM Mini)
 
 dve:
   fillSource: 1
@@ -363,7 +363,7 @@ macros:
       - action: ResetDveAll
         buttonsLightOff: [12, 13]
 
-# Funcionalities which can run upon controller twist / fader fade:
+# Functionalities which can run upon controller twist / fader fade:
 #
 # ATEM Actions:
 # - ChangeAudioSourceGain
@@ -441,10 +441,10 @@ controllers:
     audioIndex: 4
     channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
     defaultValue: 105
-  # LAYER A: FAIDER CHANGE
+  # LAYER A: FADER CHANGE
   - note: 126
     action: ''
-  # LAYER B: FAIDER CHANGE
+  # LAYER B: FADER CHANGE
   - note: 127
     action: ''
 
