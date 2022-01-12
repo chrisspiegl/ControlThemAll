@@ -1,11 +1,44 @@
 import {Buffer} from 'node:buffer';
 import sharp from 'sharp';
 import {fabric} from 'fabric';
+import cacheManager from 'cache-manager';
+import fsStore from 'cache-manager-fs-hash';
+import hash from 'object-hash';
+
+// Const memoryCache = cacheManager.caching({
+// 	store: 'memory',
+// 	max: 100,
+// 	ttl: 10 * 60, /* Seconds */
+// });
+
+const diskCache = cacheManager.caching({
+	store: fsStore,
+	options: {
+		path: 'tmp/streamdeck-images', // Path for cached files
+		ttl: 60 * 60, // Time to life in seconds
+		subdirs: true, // Create subdirectories to reduce the
+		// files in a single dir (default: false)
+		zip: true, // Zip files to save diskspace (default: false)
+	},
+});
+
+const cache = cacheManager.multiCaching([
+	// MemoryCache, // not using memory cache in development since the restart is way more common than one may think and on restart it would always rerender everything
+	diskCache,
+]);
 
 sharp.concurrency(10);
 
 export default class RenderButton {
 	async render(options = {}) {
+		try {
+			return cache.wrap(hash(options), () => RenderButton.prototype.renderImage(options));
+		} catch (error) {
+			console.log('error while trying to render image via cache or actually render', error);
+		}
+	}
+
+	async renderImage(options = {}) {
 		const {keyIndex, label: textString, backgroundColor} = options;
 		const time = Date.now();
 		console.log(`render ${keyIndex} ${textString} ${time}`);
