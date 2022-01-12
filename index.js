@@ -1,5 +1,4 @@
-
-import ControlThemAll from './ControlThemAll.js';
+import ControlThemAll from './ControlThemAll.js'
 
 /* eslint no-new: "off" */
-new ControlThemAll();
+new ControlThemAll()
