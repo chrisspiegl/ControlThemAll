@@ -7,7 +7,7 @@
     "serve": "run-s start:dev",
     "dev": "run-s start:dev",
     "start": "run-s start:dev",
-    "start:dev": "nodemon .",
+    "start:dev": "nodemon . --ignore ./tmp",
     "cu": "ncu",
     "cu:fix": "ncu -u",
     "test": "xo --fix"
