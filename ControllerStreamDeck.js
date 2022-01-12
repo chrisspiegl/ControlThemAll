@@ -2,13 +2,14 @@ import {listStreamDecks, openStreamDeck} from '@elgato-stream-deck/node';
 import debug from 'debug';
 import {throttle} from 'throttle-debounce';
 import {EventEmitter} from 'inf-ee';
+import {cloneDeep} from 'lodash-es';
+import {diffByHash} from './utils.js';
 
 import RenderButton from './RenderButton.js';
 
 const log = debug('sio:sdeck');
 
 const THROTTLE_BUTTON_UPDATE = 250; // Ms
-const THROTTLE_CONTROLLER_UPDATE = 250; // Ms
 
 export const ConnectionState = {
 	Closed: 0x00,
@@ -29,6 +30,7 @@ export class ControllerStreamDeck extends EventEmitter {
 		this._model = undefined;
 		this._path = undefined;
 		this._serialNumber = undefined;
+		this.buttonStates = [];
 
 		this.sessionId = -1;
 
@@ -73,8 +75,6 @@ export class ControllerStreamDeck extends EventEmitter {
 		// Clear all keys
 		await this._streamDeck.clearPanel();
 
-		await this.updateButtonsViaStateInstant(this.config.streamDeck.buttons);
-
 		this.sessionId += 1;
 		this.emit('connect', {
 			isReconnect: this.sessionId > 0,
@@ -110,15 +110,8 @@ export class ControllerStreamDeck extends EventEmitter {
 		}
 	}
 
-	// SendButtonOff(options) {
-	// 	this.send('noteoff', options);
-	// }
-
-	// sendButtonOn(options) {
-	// 	this.send('noteon', options);
-	// }
-
 	updateButtonsViaStateInstant(buttonStates) {
+		this.log('debug', 'updateButtonsViaStateInstant');
 		return Promise.all(buttonStates.map(async btn => {
 			let state = (btn.state || 'buttonoff').toLowerCase();
 			if (['flashingon', 'flashingoff'].includes(state)) {
@@ -126,25 +119,63 @@ export class ControllerStreamDeck extends EventEmitter {
 				state = state === 'flashingon' ? 'buttonon' : 'buttonoff';
 			}
 
+			switch (state) {
+				case 'buttonon': {
+					state = '#ff0000';
+
+					break;
+				}
+
+				case 'flashingon': {
+					state = '#00ff00';
+
+					break;
+				}
+
+				case 'flashingoff': {
+					state = '#0000ff';
+
+					break;
+				}
+
+				default: {
+					state = '#000000';
+				}
+			}
+
 			await this.send({
 				keyIndex: btn.button,
 				label: btn.label,
-				backgroundColor: state === 'buttonon' ? '#FF0000' : '#000000',
+				backgroundColor: state || '#000000',
 			});
-		}));
+		}),
+		);
+	}
+
+	async updateButtonsViaStateCached(buttonStates) {
+		this.log('debug', 'updateButtonsViaStateCached');
+		// TODO: by using diffByHash I am ignoring all those buttons whish should be "flashing" since they will not change by themselves. But that's ok for now.
+		console.log(buttonStates[0]);
+		console.log(this.buttonStates[0]);
+		const buttonStatesChanged = diffByHash(buttonStates, this.buttonStates);
+		console.log('buttonStatesChanged', buttonStatesChanged);
+		if (buttonStatesChanged.length > 0) {
+			await this.updateButtonsViaStateInstant(buttonStatesChanged);
+			this.buttonStates = cloneDeep(buttonStates);
+		}
 	}
 
 	updateButtonsViaState(buttonStates, instant = false) {
 		// This.log('debug', 'updateButtonsViaState')
 		if (instant) {
-			// This.log('debug', 'updateButtonsViaStateInstant')
+			this.log('debug', 'updateButtonsViaStateInstant');
 			this.updateButtonsViaStateInstant(buttonStates);
 		} else {
 			if (!this.updateButtonsViaStateThrottled) {
-				this.updateButtonsViaStateThrottled = throttle(THROTTLE_BUTTON_UPDATE, false, buttonStates =>
-				// This.log('debug', 'updateButtonsViaStateThrottled')
-					this.updateButtonsViaStateInstant(buttonStates),
-				);
+				this.updateButtonsViaStateThrottled = throttle(THROTTLE_BUTTON_UPDATE, false, buttonStates => {
+					this.log('debug', 'updateButtonsViaStateThrottled');
+					this.updateButtonsViaStateCached(buttonStates);
+				});
 			}
 
 			this.updateButtonsViaStateThrottled(buttonStates);

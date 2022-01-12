@@ -4,7 +4,6 @@ import got from 'got';
 import delay from 'delay';
 import merge from 'deepmerge';
 import {Enums} from 'atem-connection';
-// Import { EventEmitter } from 'inf-ee'
 
 import beforeShutdown from './beforeShutdown.js';
 import {ControllerWebServer} from './ControllerWebServer.js';
@@ -167,7 +166,7 @@ export class ControlThemAll {
 
 	streamDeckOnDisconnect(parameters) {
 		console.log('streamDeck onDisconnect:', parameters);
-		// This.streamDeckStopTimers();
+		this.streamDeckStopTimers();
 	}
 
 	streamDeckOnButtonDown(keyIndex) {
@@ -417,6 +416,7 @@ export class ControlThemAll {
 
 				this.updateDveButtons();
 				this.controllerMidi.updateButtonsViaState(this.config.buttons);
+				this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons);
 			},
 
 			switchProgramAndDveSource: () => {
@@ -565,6 +565,7 @@ export class ControlThemAll {
 				}
 
 				this.controllerMidi.updateButtonsViaState(this.config.buttons);
+				this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons);
 			},
 			ResetDvePosition: (options, value) => {
 				const {defaultValue} = options;
@@ -594,6 +595,7 @@ export class ControlThemAll {
 				}
 
 				this.controllerMidi.updateButtonsViaState(this.config.buttons);
+				this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons);
 			},
 			ResetDveMask: (options, value) => {
 				const {defaultValue} = options;
@@ -623,6 +625,7 @@ export class ControlThemAll {
 				}
 
 				this.controllerMidi.updateButtonsViaState(this.config.buttons);
+				this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons);
 			},
 
 			ResetDveAll: () => {
@@ -669,6 +672,7 @@ export class ControlThemAll {
 
 				this.controllerMidi.updateButtonsViaState(this.config.buttons);
 				this.controllerMidi.updateControllersViaState(this.config.controllers);
+				this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons);
 			},
 
 			FadeToBlack: (options, value) => this.controllerAtem.fadeToBlack(),
@@ -682,6 +686,7 @@ export class ControlThemAll {
 				}
 
 				this.controllerMidi.updateButtonsViaState(this.config.buttons);
+				this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons);
 			},
 
 			ChangeProgramSource: (options, value) => {
@@ -737,6 +742,10 @@ export class ControlThemAll {
 				if (this.controllerMidi) {
 					this.controllerMidi.updateButtonsViaState(this.config.buttons);
 				}
+
+				if (this.controllerStreamDeck) {
+					this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons);
+				}
 			},
 			ChangeDvePosition: (options, value) => {
 				const {defaultValue} = options;
@@ -774,6 +783,10 @@ export class ControlThemAll {
 				if (this.controllerMidi) {
 					this.controllerMidi.updateButtonsViaState(this.config.buttons);
 				}
+
+				if (this.controllerStreamDeck) {
+					this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons);
+				}
 			},
 			ChangeDveMask: (options, value) => {
 				const {defaultValue} = options;
@@ -809,6 +822,10 @@ export class ControlThemAll {
 				if (this.controllerMidi) {
 					this.controllerMidi.updateButtonsViaState(this.config.buttons);
 				}
+
+				if (this.controllerStreamDeck) {
+					this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons);
+				}
 			},
 
 			ChangeAudioSourceGain: (options, value) => this.getActionChain('changeAudioSourceGain')(options, value),
@@ -837,26 +854,40 @@ export class ControlThemAll {
 		this.updateButtonState(btns, {state: 'noteoff', value: 0}, 'note');
 	}
 
-	// SwitchStreamDeckOn(btns) {
-	//   btns = asArray(btns)
-	//   // Console.log(`switchStreamDeckOn:`, btns)
-	//   btns = btns.map((btn) => ({ note: btn }))
-	//   this.updateStreamDeckState(btns, { state: 'buttonon', value: 127 }, 'note')
-	// }
+	switchStreamDeckOn(btns) {
+		btns = asArray(btns);
+		console.log('switchStreamDeckOn:', btns);
+		btns = btns.map(btn => ({button: btn}));
+		this.updateStreamDeckState(btns, {state: 'buttonon'}, 'button');
+	}
 
-	// switchStreamDeckFlashing(btns) {
-	//   btns = asArray(btns)
-	//   // Console.log(`switchStreamDeckFlashing:`, btns)
-	//   btns = btns.map((btn) => ({ note: btn }))
-	//   this.updateStreamDeckState(btns, { state: 'flashingon', value: 127 }, 'note')
-	// }
+	switchStreamDeckFlashing(btns) {
+		btns = asArray(btns);
+		console.log('switchStreamDeckFlashing:', btns);
+		btns = btns.map(btn => ({button: btn}));
+		this.updateStreamDeckState(btns, {state: 'flashingon'}, 'button');
+	}
 
-	// switchStreamDeckOff(btns) {
-	//   btns = asArray(btns)
-	//   // Console.log(`switchStreamDeckOff:`, btns)
-	//   btns = btns.map((btn) => ({ note: btn }))
-	//   this.updateStreamDeckState(btns, { state: 'buttonoff', value: 0 }, 'note')
-	// }
+	switchStreamDeckOff(btns) {
+		btns = asArray(btns);
+		console.log('switchStreamDeckOff:', btns);
+		btns = btns.map(btn => ({button: btn}));
+		this.updateStreamDeckState(btns, {state: 'buttonoff'}, 'button');
+	}
+
+	updateStreamDeckState(buttonStates, overwrite = {}, via = 'action') {
+		buttonStates = asArray(buttonStates);
+		buttonStates = buttonStates.map(buttonState => ({state: 'buttonoff', ...buttonState, ...overwrite}));
+		this.config.streamDeck.buttons = this.config.streamDeck.buttons.map(button => {
+			const updatedButtonState = find(buttonStates, element => element[via] === button[via]);
+			if (updatedButtonState) {
+				button.value = updatedButtonState.value;
+				button.state = updatedButtonState.state;
+			}
+
+			return button;
+		});
+	}
 
 	getButtonsByAction(action) {
 		return this.config.buttons.filter(element => element.action === action || element.noteOn?.action === action || element.noteOff?.action === action).map(element => element.note);
@@ -903,14 +934,14 @@ export class ControlThemAll {
 		const buttonsForDveSelection = this.config.feedback.buttonsForActiveUpstreamKeyerFillSource;
 		const buttonActiveDveFillSource = buttonsForDveSelection[nameOfInput];
 
-		const streamDecksForDveSelection = this.config.feedback.streamDeckForActiveUpstreamKeyerFillSource;
+		const streamDecksForDveSelection = this.config.streamDeck.feedback.activeUpstreamKeyerFillSource;
 		const streamDeckActiveDveFillSource = streamDecksForDveSelection[nameOfInput];
 
 		this.switchButtonLightOff(difference(flatten(Object.values(buttonsForDveSelection)), buttonActiveDveFillSource));
 		this.switchButtonLightOn(buttonActiveDveFillSource);
 
-		// This.switchStreamDeckOff(difference(flatten(Object.values(streamDecksForDveSelection)), streamDeckActiveDveFillSource))
-		// this.switchStreamDeckOn(streamDeckActiveDveFillSource)
+		this.switchStreamDeckOff(difference(flatten(Object.values(streamDecksForDveSelection)), streamDeckActiveDveFillSource));
+		this.switchStreamDeckOn(streamDeckActiveDveFillSource);
 	}
 
 	updatecontrollerState(controllerStates, overwrite = {}, via = 'action') {
@@ -973,8 +1004,9 @@ export class ControlThemAll {
 			console.log('pathToChange:', pathToChange);
 		}
 
+		const isInitial = pathToChange.length === 1 && pathToChange[0] === 'initial';
+
 		for (const path of pathToChange) {
-			const isInitial = path === 'initial';
 			if (isInitial) {
 				// Find all ChangeAudioSourceGain controllers and set them to their default
 				for (const controller of this.config.controllers) {
@@ -1028,8 +1060,8 @@ export class ControlThemAll {
 				const buttonsForProgramInputWithoutDve = this.config.feedback.buttonsForProgramInputWithoutDve;
 				const buttonsForProgramInputWithDve = this.config.feedback.buttonsForProgramInputWithDve;
 
-				const streamDeckForProgramInputWithoutDve = this.config.feedback.streamDeckForProgramInputWithoutDve;
-				const streamDeckForProgramInputWithDve = this.config.feedback.streamDeckForProgramInputWithDve;
+				const streamDeckForProgramInputWithoutDve = this.config.streamDeck.feedback.programInputWithoutDve;
+				const streamDeckForProgramInputWithDve = this.config.streamDeck.feedback.programInputWithDve;
 
 				const nameOfInput = Object.keys(this.config.inputMapping).find(key => this.config.inputMapping[key] === programInput);
 
@@ -1041,6 +1073,9 @@ export class ControlThemAll {
 
 				this.switchButtonLightOff(difference(buttonsForProgramInputAll, buttonsForProgramInput));
 				this.switchButtonLightOn(buttonsForProgramInput);
+
+				this.switchStreamDeckOff(difference(streamDeckForProgramInputAll, streamDeckForProgramInput));
+				this.switchStreamDeckOn(streamDeckForProgramInput);
 
 				this.updateDveButtons();
 
@@ -1054,15 +1089,12 @@ export class ControlThemAll {
 
 		if (this.controllerMidi) {
 			this.controllerMidi.updateControllersViaState(this.config.controllers);
-		}
-
-		if (this.controllerMidi) {
 			this.controllerMidi.updateButtonsViaState(this.config.buttons);
 		}
 
-		// If (this.controllerStreamDeck) {
-		//   this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons)
-		// }
+		if (this.controllerStreamDeck) {
+			this.controllerStreamDeck.updateButtonsViaState(this.config.streamDeck.buttons, isInitial);
+		}
 	}
 
 	async exitHandler(options, exitCode) {

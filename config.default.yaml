@@ -13,6 +13,25 @@ streamDeck:
   enabled: false
   model: ''
   serialNumber: ''
+  feedback:
+    programInputWithoutDve:
+      cam1: [10]
+      cam2: [6]
+      cam3: [7]
+      cam4: [8]
+
+    programInputWithDve:
+      cam1: [5]
+      cam2: [11]
+      cam3: [12]
+      cam4: [13]
+
+    activeUpstreamKeyerFillSource:
+      cam1: [0]
+      cam2: [1]
+      cam3: [2]
+      cam4: [3]
+
   buttons:
     - button: 0
       label: 'DVE Cam1'
@@ -750,21 +769,3 @@ feedback:
     cam2: [21, 47]
     cam3: [22, 45]
     cam4: [23, 46]
-
-  streamDeckForProgramInputWithoutDve:
-    cam1: [16]
-    cam2: [9]
-    cam3: [10]
-    cam4: [11]
-
-  streamDeckForProgramInputWithDve:
-    cam1: [8]
-    cam2: [17]
-    cam3: [18]
-    cam4: [19]
-
-  streamDeckForActiveUpstreamKeyerFillSource:
-    cam1: [20]
-    cam2: [21]
-    cam3: [22]
-    cam4: [23]
