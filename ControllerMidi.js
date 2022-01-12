@@ -211,18 +211,6 @@ export class ControllerMidi extends EventEmitter {
 		}
 	}
 
-	sendNoteOff(options) {
-		this.send('noteoff', options);
-	}
-
-	sendNoteOn(options) {
-		this.send('noteon', options);
-	}
-
-	sendController(options) {
-		this.send('cc', options);
-	}
-
 	sendControllerChange(options) {
 		this.send('cc', options);
 	}
