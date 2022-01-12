@@ -6,6 +6,8 @@ specifiers:
   '@nut-tree/nut-js': ^2.0.0
   atem-connection: 3.0.0-nightly-latest-20211125-222857-2b30eea.0
   atem-state: ^0.12.2
+  cache-manager: ^3.6.0
+  cache-manager-fs-hash: ^1.0.0
   debug: ^4.3.3
   deepmerge: ^4.2.2
   delay: ^5.0.0
@@ -19,6 +21,8 @@ specifiers:
   nodemon: ^2.0.15
   npm-check-updates: ^12.1.0
   npm-run-all: ^4.1.5
+  object-hash: ^2.2.0
+  prettier: ^2.5.1
   sharp: ^0.29.3
   throttle-debounce: ^3.0.1
   xo: ^0.47.0
@@ -30,6 +34,8 @@ dependencies:
   '@nut-tree/nut-js': 2.0.0
   atem-connection: 3.0.0-nightly-latest-20211125-222857-2b30eea.0
   atem-state: 0.12.2_17c9ae3508178bf143117bb3ea86e899
+  cache-manager: 3.6.0
+  cache-manager-fs-hash: 1.0.0
   debug: 4.3.3
   deepmerge: 4.2.2
   delay: 5.0.0
@@ -40,6 +46,7 @@ dependencies:
   got: 12.0.1
   inf-ee: 1.0.4
   lodash-es: 4.17.21
+  object-hash: 2.2.0
   sharp: 0.29.3
   throttle-debounce: 3.0.1
   yaml: 1.10.2
@@ -48,6 +55,7 @@ devDependencies:
   nodemon: 2.0.15
   npm-check-updates: 12.1.0
   npm-run-all: 4.1.5
+  prettier: 2.5.1
   xo: 0.47.0
 
 packages:
@@ -1347,6 +1355,10 @@ packages:
     engines: {node: '>=0.8'}
     dev: false
 
+  /async/3.2.0:
+    resolution: {integrity: sha512-TR2mEZFVOj2pLStYxLht7TyfuRzaydfpxr3k9RpHIzMgw7A64dzsdqCxH1WJyQdoe8T10nDXd9wnEigmiuHIZw==}
+    dev: false
+
   /asynckit/0.4.0:
     resolution: {integrity: sha1-x57Zf380y48robyXkLzDZkdLS3k=}
     dev: false
@@ -1592,6 +1604,21 @@ packages:
       tar: 6.1.11
       unique-filename: 1.1.1
     dev: true
+
+  /cache-manager-fs-hash/1.0.0:
+    resolution: {integrity: sha512-fK2vEAhWh7IAzBP+JwUEJkng0OPOxw3ji86SjQS5SWdLx2Cytku6xFNoQK32pedtuae/wBl/jA/X4abiAYHS/Q==}
+    engines: {node: '>=8.0.0'}
+    dependencies:
+      lockfile: 1.0.4
+    dev: false
+
+  /cache-manager/3.6.0:
+    resolution: {integrity: sha512-D4GJZhyYgprYM30ZEPOn9kkdwdPUumX3ujbNbl7FYjcRViRvAgY53k6pO/82wNsm7c4aHVgXfR12/3huA47qnA==}
+    dependencies:
+      async: 3.2.0
+      lodash: 4.17.21
+      lru-cache: 6.0.0
+    dev: false
 
   /cacheable-lookup/6.0.4:
     resolution: {integrity: sha512-mbcDEZCkv2CZF4G01kr8eBd/5agkt9oCqz75tJMSIsquvRZ2sL6Hi5zGVKi/0OSC9oO1GHfJ2AV0ZIOY9vye0A==}
@@ -4193,6 +4220,12 @@ packages:
       p-locate: 6.0.0
     dev: true
 
+  /lockfile/1.0.4:
+    resolution: {integrity: sha512-cvbTwETRfsFh4nHsL1eGWapU1XFi5Ot9E85sWAwia7Y7EgB7vfqcZhTKZ+l7hCGxSPoushMv5GKhT5PdLv03WA==}
+    dependencies:
+      signal-exit: 3.0.6
+    dev: false
+
   /lodash-es/4.17.21:
     resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
 
@@ -4877,6 +4910,11 @@ packages:
   /object-assign/4.1.1:
     resolution: {integrity: sha1-IQmtx5ZYh8/AXLvUQsrIv7s2CGM=}
     engines: {node: '>=0.10.0'}
+    dev: false
+
+  /object-hash/2.2.0:
+    resolution: {integrity: sha512-gScRMn0bS5fH+IuwyIFgnh9zBdo4DV+6GhygmWM9HyNJSgS0hScp1f5vjtm7oIIOiT9trXrShAkLFSc2IqKNgw==}
+    engines: {node: '>= 6'}
     dev: false
 
   /object-inspect/1.12.0:
