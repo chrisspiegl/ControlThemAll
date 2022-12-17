@@ -1,5 +1,9 @@
 # ControlThemAll
 
+**IMPORTANT:** This is no longer developed as I have moved on to other solutions / no longer needing this codebase!
+
+## Previous Readme
+
 Control your [ATEM Mini](https://crsp.li/ATEMMiniLineup) (and more) with a Midi Controll Surface such as the [Behringer X-Touch Mini](https://crsp.li/xtouchmini) (and probably more in the future).
 
 ## Development Status
