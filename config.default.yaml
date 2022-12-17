@@ -132,7 +132,7 @@ streamDeck:
 
 atem:
   enabled: false
-  address: 192.168.10.240
+  address: 192.168.178.240
 
 hotkeys:
   enabled: false
@@ -499,14 +499,17 @@ buttons:
     noteOff:
       action: ChangeProgramSource
       programInput: cam2
+      withUpstreamKeyer: true
   - note: 10
     noteOff:
       action: ChangeProgramSource
       programInput: cam3
+      withUpstreamKeyer: true
   - note: 11
     noteOff:
       action: ChangeProgramSource
       programInput: cam4
+      withUpstreamKeyer: true
   - note: 12
     noteOff:
       action: ChangeDveStyle
@@ -572,17 +575,14 @@ buttons:
     noteOff:
       action: ChangeProgramSource
       programInput: cam2
-      withUpstreamKeyer: true
   - note: 18
     noteOff:
       action: ChangeProgramSource
       programInput: cam3
-      withUpstreamKeyer: true
   - note: 19
     noteOff:
       action: ChangeProgramSource
       programInput: cam4
-      withUpstreamKeyer: true
   - note: 20
     noteOff:
       action: ChangeUpstreamKeyerFillSource
@@ -653,12 +653,12 @@ buttons:
   - note: 34
     noteOff:
       action: ChangeProgramSource
-      programInput: cam4
+      programInput: cam2
       withUpstreamKeyer: true
   - note: 35
     noteOff:
       action: ChangeProgramSource
-      programInput: cam2
+      programInput: cam4
       withUpstreamKeyer: true
   - note: 36
     noteOff:
@@ -681,7 +681,12 @@ buttons:
       action: SwitchProgramAndUpstreamKeyerFillSource
   - note: 39
     noteOff:
-      action: FadeToBlack
+      # action: FadeToBlack'
+      action: ToggleAudioSourceMixOption
+      audioIndex: 1301
+      channels: ['-65280'] # stereo split channels: ['-255', '-256'] | joined channel: ['-65280']
+      defaultValue: on
+      toggle: ['on', 'off']
   # LAYER B - BUTTONS LOWER ROW
   - note: 40
     noteOff:
@@ -694,11 +699,11 @@ buttons:
   - note: 42
     noteOff:
       action: ChangeProgramSource
-      programInput: cam4
+      programInput: cam2
   - note: 43
     noteOff:
       action: ChangeProgramSource
-      programInput: cam2
+      programInput: cam4
   - note: 44
     noteOff:
       action: ChangeUpstreamKeyerFillSource
@@ -754,18 +759,18 @@ feedback:
 
   buttonsForProgramInputWithoutDve:
     cam1: [16, 40]
-    cam2: [9, 43]
-    cam3: [10, 41]
-    cam4: [11, 42]
+    cam2: [17, 42]
+    cam3: [18, 41]
+    cam4: [19, 43]
 
   buttonsForProgramInputWithDve:
     cam1: [8, 32]
-    cam2: [17, 35]
-    cam3: [18, 33]
-    cam4: [19, 34]
+    cam2: [9, 34]
+    cam3: [10, 33]
+    cam4: [11, 35]
 
   buttonsForActiveUpstreamKeyerFillSource:
     cam1: [20, 44]
-    cam2: [21, 47]
+    cam2: [21, 46]
     cam3: [22, 45]
-    cam4: [23, 46]
+    cam4: [23, 47]

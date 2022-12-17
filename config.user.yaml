@@ -2,10 +2,12 @@ webServer:
   enabled: false
 
 midi:
-  enabled: false
+  enabled: true
 
 atem:
-  enabled: false
+  enabled: true
 
 streamDeck:
   enabled: false
+  model: 'original-mk2'
+  serialNumber: 'DL42K1A08814'

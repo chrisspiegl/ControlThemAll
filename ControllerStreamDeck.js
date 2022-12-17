@@ -82,12 +82,19 @@ export class ControllerStreamDeck extends EventEmitter {
   }
 
   async disconnect() {
-    console.log('stream deck disconnecting?!')
-    await this._streamDeck.resetToLogo()
-    this._streamDeck.removeAllListeners()
-    await this._streamDeck.close()
-    delete this._streamDeck
-    this.emit('disconnect', { sessionId: this.sessionId })
+    try {
+      this._streamDeck.resetToLogo()
+      this._streamDeck.removeAllListeners()
+      if (this._streamDeck) {
+        this._streamDeck.close()
+        delete this._streamDeck
+      }
+
+      this.emit('disconnect', { sessionId: this.sessionId })
+      return { sessionId: this.sessionId }
+    } catch (error) {
+      console.log('error while closing stream deck', error)
+    }
   }
 
   async send(options) {

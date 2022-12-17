@@ -1,10 +1,12 @@
+import process from 'node:process'
 import { find, isEmpty, difference, flatten } from 'lodash-es'
 import got from 'got'
 import delay from 'delay'
 import merge from 'deepmerge'
 import { Enums } from 'atem-connection'
 
-import beforeShutdown from './beforeShutdown.js'
+import exitHook from 'exit-hook'
+// import beforeShutdown from './beforeShutdown.js'
 import { ControllerWebServer } from './ControllerWebServer.js'
 import { ControllerAtem } from './ControllerAtem.js'
 import { ControllerMidi } from './ControllerMidi.js'
@@ -36,19 +38,16 @@ export class ControlThemAll {
 
   async setup() {
     console.log('Setting up ControlThemAll Backend')
-    // // Do something when app is closing
-    // process.on('exit', this.exitHandler.bind(this, { exit: true }))
-    // // catches ctrl+c event
-    // process.on('SIGINT', this.exitHandler.bind(this, {cleanup: true}));
-    // // Catches "kill pid" (for example: nodemon restart)
-    // process.on('SIGUSR1', this.exitHandler.bind(this, {exit: true}));
-    // process.on('SIGUSR2', this.exitHandler.bind(this, {exit: true, cleanup: true}));
-    // // Catches uncaught exceptions
-    // process.on('uncaughtException', this.exitHandler.bind(this, {exit: true}));
-    // process.on('uncaughtException', (reason) => console.log('UNHANDLED EXCEPTION:', reason))
-    // process.on('unhandledRejection', reason => console.log('UNHANDLED REJECTION:', reason));
 
-    beforeShutdown(this.exitHandler.bind(this, { cleanup: true, exit: true }))
+    process.on('exit', (t) => console.log('process.on : exit:', t))
+    process.on('SIGINT', (t) => console.log('process.on : SIGINT:', t))
+    process.on('SIGUSR1', (t) => console.log('process.on : SIGUSR1:', t))
+    process.on('SIGUSR2', (t) => console.log('process.on : SIGUSR2:', t))
+    process.on('uncaughtException', (t) => console.log('process.on : uncaughtException:', t))
+    process.on('uncaughtException', (t) => console.log('process.on : uncaughtException:', t))
+    process.on('unhandledRejection', (t) => console.log('process.on : unhandledRejection:', t))
+
+    exitHook(this.exitHandler.bind(this))
 
     this.controllerConfig = new ControllerConfig()
     this.config = await this.controllerConfig.getConfig()
@@ -1092,57 +1091,43 @@ export class ControlThemAll {
     }
   }
 
-  async exitHandler(options, exitCode) {
-    console.log(`exitHandler with exitCode: ${exitCode || 'NONE'}`)
+  exitHandler() {
+    console.log(`running exitHandler for cleanup`)
 
-    // SetTimeout(error => {
-    // 	// Force close server after timeout (this is if the cleanUp takes too long)
-    // 	console.log('gentle took too long exiting hard');
-    // 	process.exit(1);
-    // }, 10 * 1000); // 10 seconds
-
-    if (options.cleanup) {
-      console.log('ControlThemAll: Doing the cleanup.')
-
-      if (this.controllerMidi && this.controllerMidi.isConnected()) {
-        this.switchButtonLightOff(flatten(this.config.buttons.map((element) => [element.note])))
-        this.controllerMidi.updateButtonsViaState(this.config.buttons)
-        this.updateControllerState(this.config.controllers.map((element) => merge(element, { state: 'cc', value: 0 })))
-        this.controllerMidi.updateControllersViaState(this.config.controllers)
-      }
-
-      if (this.controllerWebServer) {
-        console.log('before web server disconnect')
-        console.log(await this.controllerWebServer.disconnect())
-        console.log('after web server disconnect')
-      }
-
-      if (this.controllerMidi) {
-        console.log('before midi disconnect')
-        console.log(await this.controllerMidi.disconnect())
-        console.log('after midi disconnect')
-      }
-
-      if (this.controllerStreamDeck) {
-        console.log('before stream deck disconnect')
-        console.log(await this.controllerStreamDeck.disconnect())
-        console.log('after stream deck disconnect')
-      }
-
-      if (this.controllerAtem) {
-        console.log('before atem disconnect')
-        console.log(await this.controllerAtem.disconnect())
-        console.log('after atem disconnect')
-      }
-      // Await this.controllerHotkeys.disconnect()
-
-      console.log('ControlThemAll closed, cleaned, and shutting down!')
+    if (this.controllerMidi && this.controllerMidi.isConnected()) {
+      this.switchButtonLightOff(flatten(this.config.buttons.map((element) => [element.note])))
+      this.controllerMidi.updateButtonsViaState(this.config.buttons)
+      this.updateControllerState(this.config.controllers.map((element) => merge(element, { state: 'cc', value: 0 })))
+      this.controllerMidi.updateControllersViaState(this.config.controllers)
     }
 
-    // if (options.exit) {
-    //   console.log('ControlThemAll closed all connections successfully… shuting down…')
-    //   process.exit()
-    // }
+    if (this.controllerWebServer) {
+      console.log('before web server disconnect')
+      this.controllerWebServer.disconnect()
+      delete this.controllerWebServer
+      console.log('after web server disconnect')
+    }
+
+    if (this.controllerMidi) {
+      console.log('before midi disconnect')
+      this.controllerMidi.disconnect()
+      delete this.controllerMidi
+      console.log('after midi disconnect')
+    }
+
+    if (this.controllerAtem) {
+      console.log('before atem disconnect')
+      this.controllerAtem.disconnect()
+      delete this.controllerAtem
+      console.log('after atem disconnect')
+    }
+
+    if (this.controllerStreamDeck) {
+      console.log('before stream deck disconnect')
+      this.controllerStreamDeck.disconnect()
+      delete this.controllerStreamDeck
+      console.log('after stream deck disconnect')
+    }
   }
 }
 
